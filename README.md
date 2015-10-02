@@ -2,6 +2,8 @@
 # NOTE
   Not finished,still working on...
 
+![TARGET](./demo.png)
+
 ## License
 
 Copyright 2015 Bruce too
