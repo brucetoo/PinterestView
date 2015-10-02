@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:showIn="@layout/activity_main"
+    tools:context=".MainActivity">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <Button
+            android:text="Long click me"
+            android:id="@+id/text"
+            android:layout_marginLeft="150dp"
+            android:layout_marginTop="150dp"
+            android:focusableInTouchMode="false"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <com.brucetoo.pinterestview.CircleImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/image"
+            android:src="@drawable/googleplus"
+            />
+    </FrameLayout>
+
+
+    <com.brucetoo.pinterestview.PinterestView
+        xmlns:custom="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/item_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#50000000"
+        custom:childSize="44px"
+        android:visibility="gone"
+        custom:fromDegrees="150.0"
+        custom:toDegrees="300.0" />
+</RelativeLayout>
