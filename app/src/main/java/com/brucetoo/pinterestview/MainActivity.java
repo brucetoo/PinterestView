@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,7 +34,18 @@ public class MainActivity extends AppCompatActivity {
         pinterestView.addShowView(40,createCircleImage(R.drawable.googleplus)
         ,createCircleImage(R.drawable.linkedin),createCircleImage(R.drawable.twitter)
         ,createCircleImage(R.drawable.pinterest));
+        pinterestView.setPinClickListener(new PinterestView.PinMenuClickListener() {
 
+            @Override
+            public void onMenuItemClick(int childAt) {
+                Toast.makeText(MainActivity.this, "onMenuItemClick" + childAt, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onPreViewClick() {
+                Toast.makeText(MainActivity.this, "onPreViewClick", Toast.LENGTH_SHORT).show();
+            }
+        });
         findViewById(R.id.text).setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {

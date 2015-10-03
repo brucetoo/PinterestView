@@ -26,7 +26,7 @@ import android.view.animation.AccelerateInterpolator;
 public class PinterestView extends ViewGroup {
 
     private final static String TAG = "PinterestView";
-    
+
     private final static int ANIMATION_DURATION = 200;
 
     private final static int LONG_PRESS_DURATION = 500;
@@ -56,6 +56,8 @@ public class PinterestView extends ViewGroup {
     private float mCenterX;
     private float mCenterY;
 
+    private PinterestView.PinMenuClickListener mPinMenuClickListener;
+
     private Handler mHandler = new Handler();
     //handle long press event
     private Runnable mLongPressRunnable = new Runnable() {
@@ -63,7 +65,6 @@ public class PinterestView extends ViewGroup {
         public void run() {
             PinterestView.this.setVisibility(View.VISIBLE);
             switchState(true);
-            Log.i(TAG, "LongPressLongPress");
         }
     };
 
@@ -88,8 +89,8 @@ public class PinterestView extends ViewGroup {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (MotionEvent.ACTION_DOWN == event.getAction()) {
-                    mCenterX = event.getRawX();
-                    mCenterY = event.getRawY();
+                    mCenterX = event.getRawX() - mChildSize / 3;
+                    mCenterY = event.getRawY() - mChildSize / 3;
                     mHandler.postDelayed(mLongPressRunnable, LONG_PRESS_DURATION);
                     mPressDuration = System.currentTimeMillis();
                 } else {
@@ -106,40 +107,53 @@ public class PinterestView extends ViewGroup {
         switch (event.getAction()) {
             case MotionEvent.ACTION_MOVE:
                 //only listen ACTION_MOVE when PinterestView is visible
-                if(PinterestView.this.getVisibility() == VISIBLE) {
+                if (PinterestView.this.getVisibility() == VISIBLE) {
                     for (int i = 0; i < mChildRects.size(); i++) {
                         Rect rect = mChildRects.valueAt(i);
                         boolean contains = rect.contains((int) event.getRawX(), (int) event.getRawY());
                         if (contains) {
                             ((CircleImageView) getChildAt(mChildRects.keyAt(i))).setFillColor(mContext.getResources().getColor(R.color.colorPrimary));
+                            getChildAt(mChildRects.keyAt(i)).setScaleX(1.3f);
+                            getChildAt(mChildRects.keyAt(i)).setScaleY(1.3f);
+                            break;
                         } else {
                             ((CircleImageView) getChildAt(mChildRects.keyAt(i))).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
+                            getChildAt(mChildRects.keyAt(i)).setScaleX(1);
+                            getChildAt(mChildRects.keyAt(i)).setScaleY(1);
                         }
                     }
-                    Log.i(TAG, "ACTION_MOVE-----" + event.getRawX() + "," + event.getRawY());
-                    Log.i(TAG, "ACTION_MOVE-----" + event.getX() + "," + event.getX());
+
                 }
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
                 mPressDuration = System.currentTimeMillis() - mPressDuration;
-                if(mPressDuration >= LONG_PRESS_DURATION){ //handle long press
-                    if(PinterestView.this.getVisibility() == VISIBLE) {
-                        Log.i(TAG, "ACTION_UP-----" + event.getX());
-                        recoverChildView();
+                if (mPressDuration >= LONG_PRESS_DURATION) { //handle long press
+                    if (PinterestView.this.getVisibility() == VISIBLE) {
+                        Log.i(TAG, "ACTION_UP--CHOOSE ONE---");
+                        for (int i = 0; i < mChildRects.size(); i++) {
+                            Rect rect = mChildRects.valueAt(i);
+                            boolean contains = rect.contains((int) event.getRawX(), (int) event.getRawY());
+                            if (contains) {
+                                mPinMenuClickListener.onMenuItemClick(mChildRects.keyAt(i));
+                                getChildAt(mChildRects.keyAt(i)).setScaleX(1);
+                                getChildAt(mChildRects.keyAt(i)).setScaleY(1);
+                            }
+                        }
                         switchState(true);
                     }
-                }else { //handle single press
+                } else { //handle single press
                     Log.i(TAG, "ACTION_UP--single press---" + event.getX());
+                    mPinMenuClickListener.onPreViewClick();
                 }
                 break;
         }
     }
 
-    private Rect getChildDisPlayBounds(View view){
+    private Rect getChildDisPlayBounds(View view) {
         int[] location = new int[2];
         view.getLocationOnScreen(location);
-        return new Rect(location[0],location[1],location[0]+getChildAt(1).getWidth(),location[1]+getChildAt(1).getHeight());
+        return new Rect(location[0], location[1], location[0] + getChildAt(1).getWidth(), location[1] + getChildAt(1).getHeight());
     }
 
     private void bindChildAnimation(final View child, final int position) {
@@ -148,26 +162,24 @@ public class PinterestView extends ViewGroup {
             @Override
             public void onGlobalLayout() {
                 Rect childRect = getChildDisPlayBounds(child);
-                mChildRects.put(position,childRect);
+                mChildRects.put(position, childRect);
                 if (mExpanded) {
                     expandAnimation(child, childRect);
                 }
             }
         });
         Rect childRect = getChildDisPlayBounds(child);
-        if(!mExpanded){
+        if (!mExpanded) {
             collapseAnimation(child, childRect);
         }
     }
 
     private void collapseAnimation(View child, Rect childRect) {
         AnimatorSet childAnim = new AnimatorSet();
-        ObjectAnimator transX = ObjectAnimator.ofFloat(child,"translationX",0,mCenterX - childRect.centerX());
-        ObjectAnimator transY = ObjectAnimator.ofFloat(child,"translationY",0,mCenterY - childRect.centerY());
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(child,"scaleX",1,(int)0.5);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(child,"scaleY",1,(int)0.5);
-        ObjectAnimator alpha = ObjectAnimator.ofFloat(child,"alpha",1,(int)0.5);
-        childAnim.playTogether(transX, transY, scaleX, scaleY,alpha);
+        ObjectAnimator transX = ObjectAnimator.ofFloat(child, "translationX", 0, (mCenterX - childRect.exactCenterX()) / 2);
+        ObjectAnimator transY = ObjectAnimator.ofFloat(child, "translationY", 0, (mCenterY - childRect.exactCenterY()) / 2);
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(child, "alpha", 1, (int) 0.5);
+        childAnim.playTogether(transX, transY, alpha);
         childAnim.setDuration(ANIMATION_DURATION);
         childAnim.setInterpolator(new AccelerateInterpolator());
         childAnim.addListener(new AnimatorListenerAdapter() {
@@ -185,14 +197,12 @@ public class PinterestView extends ViewGroup {
         childAnim.start();
     }
 
-    private void expandAnimation(View child,Rect childRect) {
+    private void expandAnimation(View child, Rect childRect) {
         AnimatorSet childAnim = new AnimatorSet();
-        ObjectAnimator transX = ObjectAnimator.ofFloat(child,"translationX",mCenterX - childRect.centerX(), 0);
-        ObjectAnimator transY = ObjectAnimator.ofFloat(child,"translationY",mCenterY - childRect.centerY(),0);
-        ObjectAnimator scaleX = ObjectAnimator.ofFloat(child,"scaleX",(int)0.5,1);
-        ObjectAnimator scaleY = ObjectAnimator.ofFloat(child,"scaleY",(int)0.5,1);
-        ObjectAnimator alpha = ObjectAnimator.ofFloat(child,"alpha",(int)0.5,1);
-        childAnim.playTogether(transX, transY, scaleX, scaleY,alpha);
+        ObjectAnimator transX = ObjectAnimator.ofFloat(child, "translationX", (mCenterX - childRect.exactCenterX()) / 2, 0);
+        ObjectAnimator transY = ObjectAnimator.ofFloat(child, "translationY", (mCenterY - childRect.exactCenterY()) / 2, 0);
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(child, "alpha", (int) 0.5, 1);
+        childAnim.playTogether(transX, transY, alpha);
         childAnim.setDuration(ANIMATION_DURATION);
         childAnim.setInterpolator(new AccelerateInterpolator());
         childAnim.addListener(new AnimatorListenerAdapter() {
@@ -207,16 +217,17 @@ public class PinterestView extends ViewGroup {
 
     /**
      * center view animation
+     *
      * @param child
      */
     private void bindCenterViewAnimation(View child) {
         AnimatorSet childAnim;
-        if(mExpanded){
+        if (mExpanded) {
             childAnim = new AnimatorSet();
-            ObjectAnimator scaleX = ObjectAnimator.ofFloat(child,"scaleX",(int)0.5,1);
-            ObjectAnimator scaleY = ObjectAnimator.ofFloat(child,"scaleY",(int)0.5,1);
-            ObjectAnimator alpha = ObjectAnimator.ofFloat(child,"alpha",(int)0.5,1);
-            childAnim.playTogether(scaleX, scaleY,alpha);
+            ObjectAnimator scaleX = ObjectAnimator.ofFloat(child, "scaleX", (int) 0.5, 1);
+            ObjectAnimator scaleY = ObjectAnimator.ofFloat(child, "scaleY", (int) 0.5, 1);
+            ObjectAnimator alpha = ObjectAnimator.ofFloat(child, "alpha", (int) 0.5, 1);
+            childAnim.playTogether(scaleX, scaleY, alpha);
             childAnim.setDuration(ANIMATION_DURATION);
             childAnim.setInterpolator(new AccelerateInterpolator());
             childAnim.addListener(new AnimatorListenerAdapter() {
@@ -226,12 +237,12 @@ public class PinterestView extends ViewGroup {
                 }
             });
             childAnim.start();
-        }else {
+        } else {
             childAnim = new AnimatorSet();
-            ObjectAnimator scaleX = ObjectAnimator.ofFloat(child,"scaleX",1,(int)0.5);
-            ObjectAnimator scaleY = ObjectAnimator.ofFloat(child,"scaleY",1,(int)0.5);
-            ObjectAnimator alpha = ObjectAnimator.ofFloat(child,"alpha",1,(int)0.5);
-            childAnim.playTogether(scaleX, scaleY,alpha);
+            ObjectAnimator scaleX = ObjectAnimator.ofFloat(child, "scaleX", 1, (int) 0.5);
+            ObjectAnimator scaleY = ObjectAnimator.ofFloat(child, "scaleY", 1, (int) 0.5);
+            ObjectAnimator alpha = ObjectAnimator.ofFloat(child, "alpha", 1, (int) 0.5);
+            childAnim.playTogether(scaleX, scaleY, alpha);
             childAnim.setDuration(ANIMATION_DURATION);
             childAnim.setInterpolator(new AccelerateInterpolator());
             childAnim.addListener(new AnimatorListenerAdapter() {
@@ -271,7 +282,7 @@ public class PinterestView extends ViewGroup {
             mChildRects.clear();
             //other view
             for (int i = 1; i < childCount; i++) {
-                ((CircleImageView)getChildAt(i)).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
+                ((CircleImageView) getChildAt(i)).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
                 bindChildAnimation(getChildAt(i), i);
             }
             //center view
@@ -311,14 +322,19 @@ public class PinterestView extends ViewGroup {
         //add other view
         for (int i = 1; i < childCount; i++) {
             Rect frame = computeChildFrame(centerX, centerY, mRadius, degrees, mChildSize);
-            if(i == 1){
-                Log.i("computeChildFrame:",frame+"");
+            if (i == 1) {
+                Log.i("computeChildFrame:", frame + "");
             }
             degrees += perDegrees;
             getChildAt(i).layout(frame.left, frame.top, frame.right, frame.bottom);
         }
     }
 
+    /**
+     * set Pinterest Menu show degrees range
+     * @param fromDegrees
+     * @param toDegrees
+     */
     public void setArc(float fromDegrees, float toDegrees) {
         if (mFromDegrees == fromDegrees && mToDegrees == toDegrees) {
             return;
@@ -326,17 +342,17 @@ public class PinterestView extends ViewGroup {
 
         mFromDegrees = fromDegrees;
         mToDegrees = toDegrees;
-
         requestLayout();
     }
 
     /**
      * addView to PinterestView
-     * @param size view size
+     *
+     * @param size        view size
      * @param centerView
      * @param normalViews
      */
-    public void addShowView(int size,View centerView,View... normalViews){
+    public void addShowView(int size, View centerView, View... normalViews) {
         this.setChildSize(size);
         addView(centerView, 0);
         for (int i = 0; i < normalViews.length; i++) {
@@ -346,7 +362,7 @@ public class PinterestView extends ViewGroup {
 
     /**
      * size (dp)
-     *
+     * default all item child size are same
      * @param size //dp
      */
     public void setChildSize(int size) {
@@ -364,4 +380,24 @@ public class PinterestView extends ViewGroup {
                 dpVal, getResources().getDisplayMetrics());
     }
 
+    /**
+     * set Pinterest click listener
+     * @param pinMenuClickListener callback
+     */
+    public void setPinClickListener( PinMenuClickListener pinMenuClickListener) {
+        this.mPinMenuClickListener = pinMenuClickListener;
+    }
+
+    interface PinMenuClickListener{
+        /**
+         *  PinterestView item click
+         * @param childAt position in PinterestView
+         */
+        void onMenuItemClick(int childAt);
+
+        /**
+         * preview(the view click to show pinterestview) click
+         */
+        void onPreViewClick();
+    }
 }
