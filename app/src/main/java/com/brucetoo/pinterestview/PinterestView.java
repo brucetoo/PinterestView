@@ -10,6 +10,7 @@ import android.graphics.Rect;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
@@ -26,8 +27,10 @@ public class PinterestView extends ViewGroup {
 
     private final static String TAG = "PinterestView";
     
-    private final static int ANIMATION_DURATION = 1000;
-    
+    private final static int ANIMATION_DURATION = 200;
+
+    private final static int LONG_PRESS_DURATION = 500;
+
     private int mChildSize;
 
     public static final float DEFAULT_FROM_DEGREES = 270.0f;
@@ -38,13 +41,17 @@ public class PinterestView extends ViewGroup {
 
     private float mToDegrees = DEFAULT_TO_DEGREES;
 
-    private static final int DEFAULT_RADIUS = 250;//px
+    private static final int DEFAULT_RADIUS = 220;//px
 
     private int mRadius;
 
     private Context mContext;
 
     private boolean mExpanded = false;
+
+    private SparseArray<Rect> mChildRects = new SparseArray<>();
+
+    private long mPressDuration;
 
     private float mCenterX;
     private float mCenterY;
@@ -83,7 +90,8 @@ public class PinterestView extends ViewGroup {
                 if (MotionEvent.ACTION_DOWN == event.getAction()) {
                     mCenterX = event.getRawX();
                     mCenterY = event.getRawY();
-                    mHandler.postDelayed(mLongPressRunnable, 1200);
+                    mHandler.postDelayed(mLongPressRunnable, LONG_PRESS_DURATION);
+                    mPressDuration = System.currentTimeMillis();
                 } else {
                     mHandler.removeCallbacks(mLongPressRunnable);
                 }
@@ -97,25 +105,33 @@ public class PinterestView extends ViewGroup {
     private void handleTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_MOVE:
-                Rect bounds;
-                int[] location = new int[2];
-                getChildAt(1).getLocationOnScreen(location);
-                bounds = new Rect(location[0],location[1],location[0]+getChildAt(1).getWidth(),location[1]+getChildAt(1).getHeight());
-                boolean contains = bounds.contains((int) event.getRawX(), (int) event.getRawY());
-                Log.i(TAG,"bounds:"+bounds);
-                if(contains){
-                    Log.i(TAG, "contains");
-                    ((CircleImageView)getChildAt(1)).setFillColor(mContext.getResources().getColor(R.color.colorPrimary));
+                //only listen ACTION_MOVE when PinterestView is visible
+                if(PinterestView.this.getVisibility() == VISIBLE) {
+                    for (int i = 0; i < mChildRects.size(); i++) {
+                        Rect rect = mChildRects.valueAt(i);
+                        boolean contains = rect.contains((int) event.getRawX(), (int) event.getRawY());
+                        if (contains) {
+                            ((CircleImageView) getChildAt(mChildRects.keyAt(i))).setFillColor(mContext.getResources().getColor(R.color.colorPrimary));
+                        } else {
+                            ((CircleImageView) getChildAt(mChildRects.keyAt(i))).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
+                        }
+                    }
+                    Log.i(TAG, "ACTION_MOVE-----" + event.getRawX() + "," + event.getRawY());
+                    Log.i(TAG, "ACTION_MOVE-----" + event.getX() + "," + event.getX());
                 }
-                Log.i(TAG, "ACTION_MOVE-----" + bounds);
-                Log.i(TAG, "ACTION_MOVE-----" + event.getRawX() + "," + event.getRawY());
-                Log.i(TAG, "ACTION_MOVE-----" + event.getX() + "," + event.getX());
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
-                Log.i(TAG, "ACTION_UP-----" + event.getX());
-                ((CircleImageView)getChildAt(1)).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
-                switchState(true);
+                mPressDuration = System.currentTimeMillis() - mPressDuration;
+                if(mPressDuration >= LONG_PRESS_DURATION){ //handle long press
+                    if(PinterestView.this.getVisibility() == VISIBLE) {
+                        Log.i(TAG, "ACTION_UP-----" + event.getX());
+                        recoverChildView();
+                        switchState(true);
+                    }
+                }else { //handle single press
+                    Log.i(TAG, "ACTION_UP--single press---" + event.getX());
+                }
                 break;
         }
     }
@@ -126,12 +142,13 @@ public class PinterestView extends ViewGroup {
         return new Rect(location[0],location[1],location[0]+getChildAt(1).getWidth(),location[1]+getChildAt(1).getHeight());
     }
 
-    private void bindChildAnimation(final View child) {
+    private void bindChildAnimation(final View child, final int position) {
         //in case when init in,child.getWidth = 0 cause get wrong rect
         child.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
                 Rect childRect = getChildDisPlayBounds(child);
+                mChildRects.put(position,childRect);
                 if (mExpanded) {
                     expandAnimation(child, childRect);
                 }
@@ -154,6 +171,11 @@ public class PinterestView extends ViewGroup {
         childAnim.setDuration(ANIMATION_DURATION);
         childAnim.setInterpolator(new AccelerateInterpolator());
         childAnim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+//                PinterestView.this.setVisibility(GONE);
+            }
+
             @Override
             public void onAnimationEnd(Animator animation) {
                 recoverChildView();
@@ -227,7 +249,7 @@ public class PinterestView extends ViewGroup {
     private void recoverChildView() {
         final int childCount = getChildCount();
         for (int i = 0; i < childCount; i++) {
-            getChildAt(i).animate().translationX(0).translationY(0).scaleX(1).scaleX(1).start();
+            getChildAt(i).animate().setDuration(100).translationX(0).translationY(0).scaleX(1).scaleX(1).start();
         }
     }
 
@@ -244,11 +266,13 @@ public class PinterestView extends ViewGroup {
 
     public void switchState(final boolean showAnimation) {
         mExpanded = !mExpanded;
+        final int childCount = getChildCount();
         if (showAnimation) {
-            final int childCount = getChildCount();
+            mChildRects.clear();
             //other view
             for (int i = 1; i < childCount; i++) {
-                bindChildAnimation(getChildAt(i));
+                ((CircleImageView)getChildAt(i)).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
+                bindChildAnimation(getChildAt(i), i);
             }
             //center view
             bindCenterViewAnimation(getChildAt(0));
@@ -314,7 +338,7 @@ public class PinterestView extends ViewGroup {
      */
     public void addShowView(int size,View centerView,View... normalViews){
         this.setChildSize(size);
-        addView(centerView,0);
+        addView(centerView, 0);
         for (int i = 0; i < normalViews.length; i++) {
             addView(normalViews[i]);
         }
