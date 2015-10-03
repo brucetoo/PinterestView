@@ -132,8 +132,8 @@ public class PinterestView extends ViewGroup {
             @Override
             public void onGlobalLayout() {
                 Rect childRect = getChildDisPlayBounds(child);
-                if(mExpanded){
-                    expandAnimation(child,childRect);
+                if (mExpanded) {
+                    expandAnimation(child, childRect);
                 }
             }
         });
@@ -304,6 +304,20 @@ public class PinterestView extends ViewGroup {
         mToDegrees = toDegrees;
 
         requestLayout();
+    }
+
+    /**
+     * addView to PinterestView
+     * @param size view size
+     * @param centerView
+     * @param normalViews
+     */
+    public void addShowView(int size,View centerView,View... normalViews){
+        this.setChildSize(size);
+        addView(centerView,0);
+        for (int i = 0; i < normalViews.length; i++) {
+            addView(normalViews[i]);
+        }
     }
 
     /**

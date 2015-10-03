@@ -30,13 +30,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
         pinterestView = (PinterestView) findViewById(R.id.item_layout);
-        ImageView image = new ImageView(this);
-        image.setBackgroundResource(R.drawable.googleplus);
-        pinterestView.addView(createCircleImage(R.drawable.googleplus), 0);
-        for (int i = 0; i < 3; i++){
-            pinterestView.addView(createCircleImage(R.drawable.twitter));
-            pinterestView.setChildSize(40);
-        }
+        pinterestView.addShowView(40,createCircleImage(R.drawable.googleplus)
+        ,createCircleImage(R.drawable.linkedin),createCircleImage(R.drawable.twitter)
+        ,createCircleImage(R.drawable.pinterest));
 
         findViewById(R.id.text).setOnTouchListener(new View.OnTouchListener() {
             @Override
