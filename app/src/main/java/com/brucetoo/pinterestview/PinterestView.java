@@ -14,6 +14,7 @@ import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
 
 /**
@@ -24,6 +25,9 @@ import android.view.animation.AccelerateInterpolator;
 public class PinterestView extends ViewGroup {
 
     private final static String TAG = "PinterestView";
+    
+    private final static int ANIMATION_DURATION = 1000;
+    
     private int mChildSize;
 
     public static final float DEFAULT_FROM_DEGREES = 270.0f;
@@ -40,7 +44,7 @@ public class PinterestView extends ViewGroup {
 
     private Context mContext;
 
-    private boolean mExpanded = true;
+    private boolean mExpanded = false;
 
     private float mCenterX;
     private float mCenterY;
@@ -123,44 +127,59 @@ public class PinterestView extends ViewGroup {
     }
 
     private void bindChildAnimation(final View child) {
+        //in case when init in,child.getWidth = 0 cause get wrong rect
+        child.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                Rect childRect = getChildDisPlayBounds(child);
+                if(mExpanded){
+                    expandAnimation(child,childRect);
+                }
+            }
+        });
         Rect childRect = getChildDisPlayBounds(child);
-        AnimatorSet childAnim;
-        if(mExpanded){
-            childAnim = new AnimatorSet();
-            ObjectAnimator transX = ObjectAnimator.ofFloat(child,"translationX",mCenterX - childRect.centerX(), 0);
-            ObjectAnimator transY = ObjectAnimator.ofFloat(child,"translationY",mCenterY - childRect.centerY(),0);
-            ObjectAnimator scaleX = ObjectAnimator.ofFloat(child,"scaleX",(int)0.5,1);
-            ObjectAnimator scaleY = ObjectAnimator.ofFloat(child,"scaleY",(int)0.5,1);
-            ObjectAnimator alpha = ObjectAnimator.ofFloat(child,"alpha",(int)0.5,1);
-            childAnim.playTogether(transX, transY, scaleX, scaleY,alpha);
-            childAnim.setDuration(300);
-            childAnim.setInterpolator(new AccelerateInterpolator());
-            childAnim.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    recoverChildView();
-                }
-            });
-            childAnim.start();
-        }else {
-            childAnim = new AnimatorSet();
-            ObjectAnimator transX = ObjectAnimator.ofFloat(child,"translationX",0,mCenterX - childRect.centerX());
-            ObjectAnimator transY = ObjectAnimator.ofFloat(child,"translationY",0,mCenterY - childRect.centerY());
-            ObjectAnimator scaleX = ObjectAnimator.ofFloat(child,"scaleX",1,(int)0.5);
-            ObjectAnimator scaleY = ObjectAnimator.ofFloat(child,"scaleY",1,(int)0.5);
-            ObjectAnimator alpha = ObjectAnimator.ofFloat(child,"alpha",1,(int)0.5);
-            childAnim.playTogether(transX, transY, scaleX, scaleY,alpha);
-            childAnim.setDuration(300);
-            childAnim.setInterpolator(new AccelerateInterpolator());
-            childAnim.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    recoverChildView();
-                    PinterestView.this.setVisibility(GONE);
-                }
-            });
-            childAnim.start();
+        if(!mExpanded){
+            collapseAnimation(child, childRect);
         }
+    }
+
+    private void collapseAnimation(View child, Rect childRect) {
+        AnimatorSet childAnim = new AnimatorSet();
+        ObjectAnimator transX = ObjectAnimator.ofFloat(child,"translationX",0,mCenterX - childRect.centerX());
+        ObjectAnimator transY = ObjectAnimator.ofFloat(child,"translationY",0,mCenterY - childRect.centerY());
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(child,"scaleX",1,(int)0.5);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(child,"scaleY",1,(int)0.5);
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(child,"alpha",1,(int)0.5);
+        childAnim.playTogether(transX, transY, scaleX, scaleY,alpha);
+        childAnim.setDuration(ANIMATION_DURATION);
+        childAnim.setInterpolator(new AccelerateInterpolator());
+        childAnim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                recoverChildView();
+                PinterestView.this.setVisibility(GONE);
+            }
+        });
+        childAnim.start();
+    }
+
+    private void expandAnimation(View child,Rect childRect) {
+        AnimatorSet childAnim = new AnimatorSet();
+        ObjectAnimator transX = ObjectAnimator.ofFloat(child,"translationX",mCenterX - childRect.centerX(), 0);
+        ObjectAnimator transY = ObjectAnimator.ofFloat(child,"translationY",mCenterY - childRect.centerY(),0);
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(child,"scaleX",(int)0.5,1);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(child,"scaleY",(int)0.5,1);
+        ObjectAnimator alpha = ObjectAnimator.ofFloat(child,"alpha",(int)0.5,1);
+        childAnim.playTogether(transX, transY, scaleX, scaleY,alpha);
+        childAnim.setDuration(ANIMATION_DURATION);
+        childAnim.setInterpolator(new AccelerateInterpolator());
+        childAnim.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                recoverChildView();
+            }
+        });
+        childAnim.start();
     }
 
 
@@ -176,7 +195,7 @@ public class PinterestView extends ViewGroup {
             ObjectAnimator scaleY = ObjectAnimator.ofFloat(child,"scaleY",(int)0.5,1);
             ObjectAnimator alpha = ObjectAnimator.ofFloat(child,"alpha",(int)0.5,1);
             childAnim.playTogether(scaleX, scaleY,alpha);
-            childAnim.setDuration(300);
+            childAnim.setDuration(ANIMATION_DURATION);
             childAnim.setInterpolator(new AccelerateInterpolator());
             childAnim.addListener(new AnimatorListenerAdapter() {
                 @Override
@@ -191,7 +210,7 @@ public class PinterestView extends ViewGroup {
             ObjectAnimator scaleY = ObjectAnimator.ofFloat(child,"scaleY",1,(int)0.5);
             ObjectAnimator alpha = ObjectAnimator.ofFloat(child,"alpha",1,(int)0.5);
             childAnim.playTogether(scaleX, scaleY,alpha);
-            childAnim.setDuration(300);
+            childAnim.setDuration(ANIMATION_DURATION);
             childAnim.setInterpolator(new AccelerateInterpolator());
             childAnim.addListener(new AnimatorListenerAdapter() {
                 @Override
@@ -208,9 +227,8 @@ public class PinterestView extends ViewGroup {
     private void recoverChildView() {
         final int childCount = getChildCount();
         for (int i = 0; i < childCount; i++) {
-            getChildAt(i).animate().translationX(1).translationY(1).scaleX(1).scaleX(1).start();
+            getChildAt(i).animate().translationX(0).translationY(0).scaleX(1).scaleX(1).start();
         }
-        requestLayout();
     }
 
     private static Rect computeChildFrame(final float centerX, final float centerY, final int radius, final float degrees,
@@ -225,6 +243,7 @@ public class PinterestView extends ViewGroup {
 
 
     public void switchState(final boolean showAnimation) {
+        mExpanded = !mExpanded;
         if (showAnimation) {
             final int childCount = getChildCount();
             //other view
@@ -235,7 +254,6 @@ public class PinterestView extends ViewGroup {
             bindCenterViewAnimation(getChildAt(0));
         }
 
-        mExpanded = !mExpanded;
     }
 
 
