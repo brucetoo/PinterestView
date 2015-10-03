@@ -5,7 +5,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
@@ -30,10 +29,20 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        /**
+         * PinterestView'layoutParams must match_parent or fill_parent,
+         * just for cover the whole screen
+         */
         pinterestView = (PinterestView) findViewById(R.id.item_layout);
+        /**
+         * add item view into pinterestView
+         */
         pinterestView.addShowView(40,createCircleImage(R.drawable.googleplus)
         ,createCircleImage(R.drawable.linkedin),createCircleImage(R.drawable.twitter)
         ,createCircleImage(R.drawable.pinterest));
+        /**
+         * add pinterestview menu and Pre click view click
+         */
         pinterestView.setPinClickListener(new PinterestView.PinMenuClickListener() {
 
             @Override
@@ -46,11 +55,12 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "onPreViewClick", Toast.LENGTH_SHORT).show();
             }
         });
+        /**
+         * dispatch pre click view onTouchEvent to PinterestView
+         */
         findViewById(R.id.text).setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                Log.i(getClass().getName(), "v.getX()-----" + v.getX());
-                Log.i(getClass().getName(), "v.getY()-----" + v.getY());
                 pinterestView.dispatchTouchEvent(event);
                 return true;
             }
@@ -58,7 +68,6 @@ public class MainActivity extends AppCompatActivity {
 
         CircleImageView imageView = (CircleImageView) findViewById(R.id.image);
         imageView.setFillColor(getResources().getColor(R.color.colorAccent));
-
     }
 
     public CircleImageView createCircleImage(int imageId){

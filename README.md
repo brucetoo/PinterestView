@@ -1,8 +1,62 @@
 # Pinterest like awesome menu control for Android
 # NOTE
-  Not finished,still working on...
+  Because the narrow range of my knowledge,Any Pull Requests are welcome.
+  Or u have better way to work this out,feedback me [@Brucetoo](https://twitter.com/Brucetoo14),Thank u.
+## Pinterest like 
+![Pinterest](./pinterest.gif)
 
-![TARGET](./demo.png)
+## This lib like 
+![MINE](./mine.gif)
+
+
+#HOW TO USE
+```java
+
+     /**
+          * PinterestView'layoutParams must match_parent or fill_parent,
+          * just for cover the whole screen
+          */
+         pinterestView = (PinterestView) findViewById(R.id.item_layout);
+         /**
+          * add item view into pinterestView
+          */
+         pinterestView.addShowView(40,createCircleImage(R.drawable.googleplus)
+         ,createCircleImage(R.drawable.linkedin),createCircleImage(R.drawable.twitter)
+         ,createCircleImage(R.drawable.pinterest));
+         /**
+          * add pinterestview menu and Pre click view click
+          */
+         pinterestView.setPinClickListener(new PinterestView.PinMenuClickListener() {
+ 
+             @Override
+             public void onMenuItemClick(int childAt) {
+                 Toast.makeText(MainActivity.this, "onMenuItemClick" + childAt, Toast.LENGTH_SHORT).show();
+             }
+ 
+             @Override
+             public void onPreViewClick() {
+                 Toast.makeText(MainActivity.this, "onPreViewClick", Toast.LENGTH_SHORT).show();
+             }
+         });
+         /**
+          * dispatch pre click view onTouchEvent to PinterestView
+          */
+         findViewById(R.id.text).setOnTouchListener(new View.OnTouchListener() {
+             @Override
+             public boolean onTouch(View v, MotionEvent event) {
+                 pinterestView.dispatchTouchEvent(event);
+                 return true;
+             }
+         });
+
+```
+
+##  TODO
+
+1. Enhance the item choose animation(More smooth)
+2. Add more default Degree Range(Demo use 150° - 300°,just for testing)
+3. Item Menu add top text like Pinterest
+4. Thinking...
 
 ## License
 
