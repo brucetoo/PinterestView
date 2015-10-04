@@ -9,15 +9,65 @@
     tools:showIn="@layout/activity_main"
     tools:context=".MainActivity">
 
-    <FrameLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
         <Button
-            android:text="Long click me"
+            android:text="Long click"
             android:id="@+id/text"
-            android:layout_marginLeft="150dp"
-            android:layout_marginTop="150dp"
-            android:focusableInTouchMode="false"
+            android:layout_centerInParent="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:text="Long click"
+            android:id="@+id/left_top"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:text="Long click"
+            android:id="@+id/top"
+            android:layout_centerHorizontal="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:text="Long click"
+            android:id="@+id/right_top"
+            android:layout_alignParentRight="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:text="Long click"
+            android:id="@+id/left"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:text="Long click"
+            android:id="@+id/right"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:text="Long click"
+            android:id="@+id/left_bottom"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentBottom="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:text="Long click"
+            android:id="@+id/bottom"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
@@ -25,9 +75,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/image"
+            android:visibility="gone"
             android:src="@drawable/googleplus"
             />
-    </FrameLayout>
+    </RelativeLayout>
 
 
     <com.brucetoo.pinterestview.PinterestView

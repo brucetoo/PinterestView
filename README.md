@@ -51,12 +51,33 @@
 
 ```
 
+```xml
+
+ <com.brucetoo.pinterestview.PinterestView
+        xmlns:custom="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/item_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#50000000"
+        custom:childSize="44px"
+        android:visibility="gone"
+        custom:fromDegrees="150.0"
+        custom:toDegrees="300.0" />
+        
+        //Note,this two params don'n need now,it can be auto compute 
+        //degrees range by position u click(a little bit coarse)
+        custom:fromDegrees="150.0"
+        custom:toDegrees="300.0"
+
+```
+
 ##  TODO
 
 1. Enhance the item choose animation(More smooth)
-2. Add more default Degree Range(Demo use 150° - 300°,just for testing)
+~~2. Add more default Degree Range(Demo use 150° - 300°,just for testing)~~
 3. Item Menu add top text like Pinterest
-4. Thinking...
+~~4. the point you click to show different type of Degree Range~~
+5. Thinking...
 
 ## License
 

@@ -9,6 +9,7 @@ import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.TypedValue;
@@ -36,6 +37,10 @@ public class PinterestView extends ViewGroup {
     public static final float DEFAULT_FROM_DEGREES = 270.0f;
 
     public static final float DEFAULT_TO_DEGREES = 360.0f;
+
+    public static final int DEFAULT_CHILD_SIZE = 44;
+    
+    public static final int DEFAULT_RECT_MARGIN_SIZE = 150;
 
     private float mFromDegrees = DEFAULT_FROM_DEGREES;
 
@@ -81,7 +86,7 @@ public class PinterestView extends ViewGroup {
             TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.PinterestView, 0, 0);
             mFromDegrees = a.getFloat(R.styleable.PinterestView_fromDegrees, DEFAULT_FROM_DEGREES);
             mToDegrees = a.getFloat(R.styleable.PinterestView_toDegrees, DEFAULT_TO_DEGREES);
-            mChildSize = Math.max(a.getDimensionPixelSize(R.styleable.PinterestView_childSize, 0), 0);
+            mChildSize = a.getDimensionPixelSize(R.styleable.PinterestView_childSize, DEFAULT_CHILD_SIZE);
             a.recycle();
         }
 
@@ -91,6 +96,7 @@ public class PinterestView extends ViewGroup {
                 if (MotionEvent.ACTION_DOWN == event.getAction()) {
                     mCenterX = event.getRawX() - mChildSize / 3;
                     mCenterY = event.getRawY() - mChildSize / 3;
+                    confirmDegreeRangeByCenter(mCenterX, mCenterY);
                     mHandler.postDelayed(mLongPressRunnable, LONG_PRESS_DURATION);
                     mPressDuration = System.currentTimeMillis();
                 } else {
@@ -100,6 +106,68 @@ public class PinterestView extends ViewGroup {
                 return true;
             }
         });
+
+    }
+
+    private void confirmDegreeRangeByCenter(float centerX, float centerY) {
+        DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
+        //left-top (-60,90)
+        Rect leftTopRect = new Rect(0,0,dp2px(DEFAULT_RECT_MARGIN_SIZE),dp2px(DEFAULT_RECT_MARGIN_SIZE));
+
+        //top (-10,140)
+        Rect topRect = new Rect(dp2px(DEFAULT_RECT_MARGIN_SIZE),0,metrics.widthPixels - dp2px(DEFAULT_RECT_MARGIN_SIZE),dp2px(DEFAULT_RECT_MARGIN_SIZE));
+
+        //right-top  50,200
+        Rect rightTopRect = new Rect(metrics.widthPixels-dp2px(DEFAULT_RECT_MARGIN_SIZE),0,metrics.widthPixels,dp2px(DEFAULT_RECT_MARGIN_SIZE));
+
+        //left -100,50
+        Rect leftRect = new Rect(0,dp2px(DEFAULT_RECT_MARGIN_SIZE),dp2px(DEFAULT_RECT_MARGIN_SIZE),metrics.heightPixels-dp2px(DEFAULT_RECT_MARGIN_SIZE));
+
+        //right 80,230
+        Rect rightRect = new Rect(metrics.widthPixels-dp2px(DEFAULT_RECT_MARGIN_SIZE),dp2px(DEFAULT_RECT_MARGIN_SIZE),metrics.widthPixels,metrics.heightPixels-dp2px(DEFAULT_RECT_MARGIN_SIZE));
+
+        //left_bottom -140,10
+        Rect leftBottomRect = new Rect(0,metrics.heightPixels-dp2px(DEFAULT_RECT_MARGIN_SIZE),dp2px(DEFAULT_RECT_MARGIN_SIZE),metrics.heightPixels);
+        //bottom  170,320
+        Rect bottomRect = new Rect(dp2px(DEFAULT_RECT_MARGIN_SIZE),metrics.heightPixels-dp2px(DEFAULT_RECT_MARGIN_SIZE),metrics.widthPixels-dp2px(DEFAULT_RECT_MARGIN_SIZE),metrics.heightPixels);
+        //right_bottom 150,300 and center
+        Rect rightBottomRect = new Rect(metrics.widthPixels-dp2px(DEFAULT_RECT_MARGIN_SIZE),metrics.heightPixels-dp2px(DEFAULT_RECT_MARGIN_SIZE),metrics.widthPixels,metrics.heightPixels);
+        Rect centerRect = new Rect(dp2px(DEFAULT_RECT_MARGIN_SIZE),dp2px(DEFAULT_RECT_MARGIN_SIZE),metrics.widthPixels-dp2px(DEFAULT_RECT_MARGIN_SIZE),metrics.heightPixels-dp2px(DEFAULT_RECT_MARGIN_SIZE));
+
+        if (leftTopRect.contains((int)centerX,(int)centerY)){
+            mFromDegrees = -60;
+            mToDegrees = 90;
+            Log.i(TAG,"leftTopRect");
+        }else if (topRect.contains((int)centerX,(int)centerY)){
+            mFromDegrees = -10;
+            mToDegrees = 150;
+            Log.i(TAG,"topRect");
+        }else if (rightTopRect.contains((int)centerX,(int)centerY)){
+            mFromDegrees = 50;
+            mToDegrees = 200;
+            Log.i(TAG,"rightTopRect");
+        }else if (leftRect.contains((int)centerX,(int)centerY)){
+            mFromDegrees = -100;
+            mToDegrees = 50;
+            Log.i(TAG,"leftRect");
+        }else if (rightRect.contains((int)centerX,(int)centerY)){
+            mFromDegrees = 80;
+            mToDegrees = 230;
+            Log.i(TAG,"rightRect");
+        }else if (leftBottomRect.contains((int)centerX,(int)centerY)){
+            mFromDegrees = -140;
+            mToDegrees = 10;
+            Log.i(TAG,"leftBottomRect");
+        }else if (bottomRect.contains((int)centerX,(int)centerY)){
+            mFromDegrees = 170;
+            mToDegrees = 320;
+            Log.i(TAG,"bottomRect");
+        }else if (rightBottomRect.contains((int)centerX,(int)centerY) || centerRect.contains((int)centerX,(int)centerY)){
+            mFromDegrees = 150;
+            mToDegrees = 300;
+            Log.i(TAG,"rightBottomRect");
+        }
+        requestLayout();
 
     }
 

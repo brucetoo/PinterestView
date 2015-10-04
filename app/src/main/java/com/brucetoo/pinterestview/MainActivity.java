@@ -66,6 +66,62 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        findViewById(R.id.left_top).setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                pinterestView.dispatchTouchEvent(event);
+                return true;
+            }
+        });
+
+        findViewById(R.id.top).setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                pinterestView.dispatchTouchEvent(event);
+                return true;
+            }
+        });
+
+        findViewById(R.id.right_top).setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                pinterestView.dispatchTouchEvent(event);
+                return true;
+            }
+        });
+        findViewById(R.id.left).setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                pinterestView.dispatchTouchEvent(event);
+                return true;
+            }
+        });
+
+        findViewById(R.id.right).setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                pinterestView.dispatchTouchEvent(event);
+                return true;
+            }
+        });
+
+        findViewById(R.id.left_bottom).setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                pinterestView.dispatchTouchEvent(event);
+                return true;
+            }
+        });
+
+        findViewById(R.id.bottom).setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                pinterestView.dispatchTouchEvent(event);
+                return true;
+            }
+        });
+
+
         CircleImageView imageView = (CircleImageView) findViewById(R.id.image);
         imageView.setFillColor(getResources().getColor(R.color.colorAccent));
     }
