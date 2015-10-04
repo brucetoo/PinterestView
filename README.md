@@ -1,7 +1,4 @@
 # Pinterest like awesome menu control for Android
-# NOTE
-  Because the narrow range of my knowledge,Any Pull Requests are welcome.
-  Or u have better way to work this out,feedback me [@Brucetoo](https://twitter.com/Brucetoo14),Thank u.
 ## Pinterest like 
 ![Pinterest](./pinterest.gif)
 
