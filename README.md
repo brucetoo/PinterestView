@@ -75,11 +75,11 @@
 
 1. Enhance the item choose animation(More smooth)
 
-~~2. Add more default Degree Range(Demo use 150° - 300°,just for testing)~~
+2. ~~Add more default Degree Range(Demo use 150° - 300°,just for testing)~~
 
 3. Item Menu add top text like Pinterest
 
-~~4. the point you click to show different type of Degree Range~~
+4. ~~the point you click to show different type of Degree Range~~
 
 5. Thinking...
 
