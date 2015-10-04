@@ -7,6 +7,7 @@
 
 ## This lib like 
 ![MINE](./mine.gif)
+![MINE](./mine2.gif)
 
 
 #HOW TO USE
