@@ -4,7 +4,8 @@
 ## DEMO
 ![MINE](./mine1.gif)
 
-
+#NOTE
+ Any pull request is available.
 #HOW TO USE
 ```java
 
@@ -69,11 +70,11 @@
 
 ##  TODO
 
-1. Enhance the item choose animation(More smooth)
+1. Enhance the item choose animation(More smooth),But how????
 
 2. ~~Add more default Degree Range(Demo use 150° - 300°,just for testing)~~
 
-3. ~~Item Menu add top text like "Pinter...View" ~~
+3. ~~Item Menu add top text~~
 
 4. ~~the point you click to show different type of Degree Range~~
 
