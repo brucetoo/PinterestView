@@ -37,9 +37,9 @@ public class MainActivity extends AppCompatActivity {
         /**
          * add item view into pinterestView
          */
-        pinterestView.addShowView(40,createCircleImage(R.drawable.googleplus)
-        ,createCircleImage(R.drawable.linkedin),createCircleImage(R.drawable.twitter)
-        ,createCircleImage(R.drawable.pinterest));
+        pinterestView.addShowView(40, createChildView(R.drawable.googleplus,"")
+        , createChildView(R.drawable.linkedin,"linkedin"), createChildView(R.drawable.twitter,"twitter")
+        , createChildView(R.drawable.pinterest,"pinterest"));
         /**
          * add pinterestview menu and Pre click view click
          */
@@ -47,12 +47,13 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onMenuItemClick(int childAt) {
-                Toast.makeText(MainActivity.this, "onMenuItemClick" + childAt, Toast.LENGTH_SHORT).show();
+               String tips = (String) pinterestView.getChildAt(childAt).getTag();
+                Toast.makeText(MainActivity.this, tips + " clicked!", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onPreViewClick() {
-                Toast.makeText(MainActivity.this, "onPreViewClick", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "button clicked!", Toast.LENGTH_SHORT).show();
             }
         });
         /**
@@ -126,12 +127,14 @@ public class MainActivity extends AppCompatActivity {
         imageView.setFillColor(getResources().getColor(R.color.colorAccent));
     }
 
-    public CircleImageView createCircleImage(int imageId){
+    public View createChildView(int imageId,String tip){
         CircleImageView imageView = new CircleImageView(this);
         imageView.setBorderWidth(0);
         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
         imageView.setFillColor(getResources().getColor(R.color.colorAccent));
         imageView.setImageResource(imageId);
+        //just for save Menu item tips
+        imageView.setTag(tip);
         return imageView;
     }
 

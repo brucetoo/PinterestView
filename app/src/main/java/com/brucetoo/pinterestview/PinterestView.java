@@ -6,7 +6,9 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -18,6 +20,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
+import android.widget.PopupWindow;
+import android.widget.TextView;
 
 /**
  * Created by Bruce Too
@@ -40,7 +44,7 @@ public class PinterestView extends ViewGroup {
 
     public static final int DEFAULT_CHILD_SIZE = 44;
     
-    public static final int DEFAULT_RECT_MARGIN_SIZE = 150;
+    public static final int DEFAULT_RECT_MARGIN_SIZE = 100;
 
     private float mFromDegrees = DEFAULT_FROM_DEGREES;
 
@@ -63,6 +67,8 @@ public class PinterestView extends ViewGroup {
 
     private PinterestView.PinMenuClickListener mPinMenuClickListener;
 
+    private PopupWindow mPopTips;
+
     private Handler mHandler = new Handler();
     //handle long press event
     private Runnable mLongPressRunnable = new Runnable() {
@@ -82,6 +88,7 @@ public class PinterestView extends ViewGroup {
         super(context, attrs);
         this.mContext = context;
         mRadius = DEFAULT_RADIUS;
+        createTipsPopWindow(context);
         if (attrs != null) {
             TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.PinterestView, 0, 0);
             mFromDegrees = a.getFloat(R.styleable.PinterestView_fromDegrees, DEFAULT_FROM_DEGREES);
@@ -107,6 +114,15 @@ public class PinterestView extends ViewGroup {
             }
         });
 
+    }
+
+    private void createTipsPopWindow(Context context) {
+        TextView tips = new TextView(context);
+        tips.setTypeface(null, Typeface.BOLD);
+        tips.setTextSize(15);
+        tips.setTextColor(Color.parseColor("#ffffff"));
+        tips.setBackgroundResource(R.drawable.shape_child_item);
+        mPopTips = new PopupWindow(tips, LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
     }
 
     private void confirmDegreeRangeByCenter(float centerX, float centerY) {
@@ -183,12 +199,27 @@ public class PinterestView extends ViewGroup {
                             ((CircleImageView) getChildAt(mChildRects.keyAt(i))).setFillColor(mContext.getResources().getColor(R.color.colorPrimary));
                             getChildAt(mChildRects.keyAt(i)).setScaleX(1.3f);
                             getChildAt(mChildRects.keyAt(i)).setScaleY(1.3f);
+                            if(!mPopTips.isShowing())
+                              mPopTips.showAsDropDown(getChildAt(mChildRects.keyAt(i)), 0, -mChildSize * 2);
+                            ((TextView)mPopTips.getContentView()).setText((String) getChildAt(mChildRects.keyAt(i)).getTag());
+
+                            for (int j = 0; j < mChildRects.size(); j++) {
+                                if (j != i) {
+                                    Log.i(TAG, "recover position:" + (String) getChildAt(mChildRects.keyAt(j)).getTag());
+                                    ((CircleImageView) getChildAt(mChildRects.keyAt(j))).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
+                                    getChildAt(mChildRects.keyAt(j)).setScaleX(1);
+                                    getChildAt(mChildRects.keyAt(j)).setScaleY(1);
+                                }
+                            }
                             break;
                         } else {
+                            mPopTips.dismiss();
                             ((CircleImageView) getChildAt(mChildRects.keyAt(i))).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
                             getChildAt(mChildRects.keyAt(i)).setScaleX(1);
                             getChildAt(mChildRects.keyAt(i)).setScaleY(1);
                         }
+
+
                     }
 
                 }
@@ -198,6 +229,7 @@ public class PinterestView extends ViewGroup {
                 mPressDuration = System.currentTimeMillis() - mPressDuration;
                 if (mPressDuration >= LONG_PRESS_DURATION) { //handle long press
                     if (PinterestView.this.getVisibility() == VISIBLE) {
+                        mPopTips.dismiss();
                         Log.i(TAG, "ACTION_UP--CHOOSE ONE---");
                         for (int i = 0; i < mChildRects.size(); i++) {
                             Rect rect = mChildRects.valueAt(i);
@@ -221,6 +253,12 @@ public class PinterestView extends ViewGroup {
     private Rect getChildDisPlayBounds(View view) {
         int[] location = new int[2];
         view.getLocationOnScreen(location);
+        //scale the rect range
+        Rect rect = new Rect();
+        rect.left = location[0]+view.getWidth()/4;
+        rect.top = location[1]-view.getHeight()/4;
+        rect.right = location[0]+view.getWidth()*3/4;
+        rect.bottom = location[1]-view.getHeight()*3/4;
         return new Rect(location[0], location[1], location[0] + getChildAt(1).getWidth(), location[1] + getChildAt(1).getHeight());
     }
 
