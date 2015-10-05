@@ -3,7 +3,6 @@
 
 ## DEMO
 ![MINE](./mine1.gif)
-![MINE](./mine2.gif)
 
 
 #HOW TO USE
@@ -74,11 +73,11 @@
 
 2. ~~Add more default Degree Range(Demo use 150° - 300°,just for testing)~~
 
-3. ~~Item Menu add top text like Pinterest ~~
+3. ~~Item Menu add top text like "Pinter...View" ~~
 
 4. ~~the point you click to show different type of Degree Range~~
 
-5. Thinking...
+5. Enhance MotionEvent.ACTION_MOVE listen...
 
 ## License
 
