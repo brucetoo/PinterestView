@@ -62,7 +62,8 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.text).setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                pinterestView.dispatchTouchEvent(event);
+                getSupportFragmentManager().beginTransaction().replace(R.id.recycler_fragment, RecyclerFragment.getInstance(), "RecyclerFragment")
+                        .addToBackStack(null).commit();
                 return true;
             }
         });

@@ -224,7 +224,7 @@ public class PinterestView extends ViewGroup {
 
                 }
                 break;
-            case MotionEvent.ACTION_CANCEL:
+//            case MotionEvent.ACTION_CANCEL://why this will cause RecyclerView get scroll listener??
             case MotionEvent.ACTION_UP:
                 mPressDuration = System.currentTimeMillis() - mPressDuration;
                 if (mPressDuration >= LONG_PRESS_DURATION) { //handle long press

@@ -80,6 +80,11 @@
             />
     </RelativeLayout>
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/recycler_fragment"
+        ></FrameLayout>
 
     <com.brucetoo.pinterestview.PinterestView
         xmlns:custom="http://schemas.android.com/apk/res-auto"
