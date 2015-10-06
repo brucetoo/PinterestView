@@ -17,6 +17,7 @@ import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
@@ -69,6 +70,12 @@ public class PinterestView extends ViewGroup {
 
     private PopupWindow mPopTips;
 
+    private int mTouchSlop;
+
+    //for better control tips popwindow show
+    private float x1;
+    private float y1;
+
     private Handler mHandler = new Handler();
     //handle long press event
     private Runnable mLongPressRunnable = new Runnable() {
@@ -88,6 +95,7 @@ public class PinterestView extends ViewGroup {
         super(context, attrs);
         this.mContext = context;
         mRadius = DEFAULT_RADIUS;
+        mTouchSlop = ViewConfiguration.get(mContext).getScaledTouchSlop();
         createTipsPopWindow(context);
         if (attrs != null) {
             TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.PinterestView, 0, 0);
@@ -190,16 +198,21 @@ public class PinterestView extends ViewGroup {
     private void handleTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_MOVE:
+                float deltaX = Math.abs(event.getX() - x1);
+                float deltaY = Math.abs(event.getY() - y1);
                 //only listen ACTION_MOVE when PinterestView is visible
-                if (PinterestView.this.getVisibility() == VISIBLE) {
+                if (PinterestView.this.getVisibility() == VISIBLE && (deltaX > mTouchSlop || deltaY > mTouchSlop)) {
                     for (int i = 0; i < mChildRects.size(); i++) {
                         Rect rect = mChildRects.valueAt(i);
                         boolean contains = rect.contains((int) event.getRawX(), (int) event.getRawY());
                         if (contains) {
+                            //point when just move into rect of child view
+                            x1 = event.getX();
+                            y1 = event.getY();
                             ((CircleImageView) getChildAt(mChildRects.keyAt(i))).setFillColor(mContext.getResources().getColor(R.color.colorPrimary));
                             getChildAt(mChildRects.keyAt(i)).setScaleX(1.3f);
                             getChildAt(mChildRects.keyAt(i)).setScaleY(1.3f);
-                            if(!mPopTips.isShowing())
+//                            if(!mPopTips.isShowing())
                               mPopTips.showAsDropDown(getChildAt(mChildRects.keyAt(i)), 0, -mChildSize * 2);
                             ((TextView)mPopTips.getContentView()).setText((String) getChildAt(mChildRects.keyAt(i)).getTag());
 
@@ -224,7 +237,7 @@ public class PinterestView extends ViewGroup {
 
                 }
                 break;
-//          case MotionEvent.ACTION_CANCEL://why this will cause RecyclerView get scroll listener??
+//          case MotionEvent.ACTION_CANCEL://ScrollView like RecyclerView will call ACTION_CANCEL!!!
             case MotionEvent.ACTION_UP:
                 mPressDuration = System.currentTimeMillis() - mPressDuration;
                 if (mPressDuration >= LONG_PRESS_DURATION) { //handle long press
