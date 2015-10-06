@@ -80,6 +80,8 @@
 
 5. Enhance MotionEvent.ACTION_MOVE listen...
 
+6. ~~Add branch "RecyclerView-demo" to show how to use with RecyclerView~~
+
 ## License
 
 Copyright 2015 Bruce too
