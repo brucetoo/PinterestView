@@ -59,11 +59,13 @@ public class MainActivity extends AppCompatActivity {
         /**
          * dispatch pre click view onTouchEvent to PinterestView
          */
-        findViewById(R.id.text).setOnTouchListener(new View.OnTouchListener() {
+        findViewById(R.id.recyclerView).setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                getSupportFragmentManager().beginTransaction().replace(R.id.recycler_fragment, RecyclerFragment.getInstance(), "RecyclerFragment")
-                        .addToBackStack(null).commit();
+                if(event.getAction() == MotionEvent.ACTION_UP) {
+                    getSupportFragmentManager().beginTransaction().replace(R.id.recycler_fragment, RecyclerFragment.getInstance(), "RecyclerFragment")
+                            .addToBackStack(null).commit();
+                }
                 return true;
             }
         });
@@ -139,4 +141,12 @@ public class MainActivity extends AppCompatActivity {
         return imageView;
     }
 
+    @Override
+    public void onBackPressed() {
+        int fragments = getFragmentManager().getBackStackEntryCount();
+        if (fragments == 1) {
+            finish();
+        }
+        super.onBackPressed();
+    }
 }
