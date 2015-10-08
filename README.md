@@ -82,6 +82,8 @@
 
 6. ~~Add branch "RecyclerView-demo" to show how to use with RecyclerView~~
 
+7. PinterestView show more accurately by the position click
+
 ## License
 
 Copyright 2015 Bruce too
