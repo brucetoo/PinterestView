@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
+<android.support.v7.widget.RecyclerView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#fff"
+    android:id="@+id/recycler"
+    />
+
+<com.brucetoo.pinterestview.PinterestView
+        xmlns:custom="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/pin_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#50000000"
+        custom:childSize="44px"
+        android:visibility="gone"/>
+</FrameLayout>
