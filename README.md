@@ -78,7 +78,11 @@
 
 4. ~~the point you click to show different type of Degree Range~~
 
-5. Enhance MotionEvent.ACTION_MOVE listen...
+5. ~~Enhance MotionEvent.ACTION_MOVE listen...~~
+
+6. ~~Add branch "RecyclerView-demo" to show how to use with RecyclerView~~
+
+7. PinterestView show more accurately by the position click
 
 ## License
 

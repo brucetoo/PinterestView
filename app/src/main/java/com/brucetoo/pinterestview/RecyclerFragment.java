@@ -26,7 +26,7 @@ public class RecyclerFragment extends Fragment {
     private RecyclerView recyclerView;
     private PinterestView pinterestView;
 
-    public static RecyclerFragment getInstance(){
+    public static RecyclerFragment getInstance() {
         RecyclerFragment fragment = new RecyclerFragment();
         return fragment;
     }
@@ -34,7 +34,7 @@ public class RecyclerFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_recycler,null,false);
+        return inflater.inflate(R.layout.fragment_recycler, null, false);
     }
 
     @Override
@@ -69,12 +69,7 @@ public class RecyclerFragment extends Fragment {
         recyclerView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                if(pinterestView.getVisibility() == View.VISIBLE) {
-                    pinterestView.dispatchTouchEvent(event);
-                    return true;
-                }else {
-                    return false;
-                }
+                return pinterestView.dispatchTouchEvent(event);
             }
         });
     }
@@ -83,18 +78,18 @@ public class RecyclerFragment extends Fragment {
 
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View view =  LayoutInflater.from(getActivity()).inflate(R.layout.item_recycler,parent,false);
+            View view = LayoutInflater.from(getActivity()).inflate(R.layout.item_recycler, parent, false);
             return new ItemViewHolder(view);
         }
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-           if(position % 2 == 0){
-               ((ItemViewHolder)holder).imageView.setImageResource(R.drawable.p1);
-           }else {
-               ((ItemViewHolder)holder).imageView.setImageResource(R.drawable.p2);
-           }
-            ((ItemViewHolder)holder).imageView.setOnTouchListener(this);
+            if (position % 2 == 0) {
+                ((ItemViewHolder) holder).imageView.setImageResource(R.drawable.p1);
+            } else {
+                ((ItemViewHolder) holder).imageView.setImageResource(R.drawable.p2);
+            }
+            ((ItemViewHolder) holder).imageView.setOnTouchListener(this);
         }
 
         @Override
@@ -102,9 +97,10 @@ public class RecyclerFragment extends Fragment {
             return 20;
         }
 
-        class ItemViewHolder extends RecyclerView.ViewHolder{
+        class ItemViewHolder extends RecyclerView.ViewHolder {
 
             private ImageView imageView;
+
             public ItemViewHolder(View itemView) {
                 super(itemView);
                 imageView = (ImageView) itemView.findViewById(R.id.image);
@@ -120,7 +116,7 @@ public class RecyclerFragment extends Fragment {
 
     }
 
-    public View createChildView(int imageId,String tip){
+    public View createChildView(int imageId, String tip) {
         CircleImageView imageView = new CircleImageView(getActivity());
         imageView.setBorderWidth(0);
         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
