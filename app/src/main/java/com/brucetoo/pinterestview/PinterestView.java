@@ -12,7 +12,6 @@ import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -23,28 +22,34 @@ import android.view.animation.AccelerateInterpolator;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+
+
+
 /**
  * Created by Bruce Too
  * On 10/2/15.
  * At 11:10
+ * TODO get pin view top location...
  */
-public class PinterestView extends ViewGroup implements View.OnTouchListener {
+public class PinterestView extends ViewGroup implements View.OnTouchListener{
 
     private final static String TAG = "PinterestView";
 
     private final static int ANIMATION_DURATION = 200;
 
-    private final static int LONG_PRESS_DURATION = 500;
-
     private int mChildSize;
 
-    public static final float DEFAULT_FROM_DEGREES = 270.0f;
+    public static final float DEFAULT_BETWTEEN_ANGLE = 30;
 
-    public static final float DEFAULT_TO_DEGREES = 360.0f;
+    public static final float DEFAULT_FROM_DEGREES = -90.0f;
+
+    public static final float DEFAULT_TO_DEGREES = -90.0f;
 
     public static final int DEFAULT_CHILD_SIZE = 44;
 
-    public static final int DEFAULT_RECT_MARGIN_SIZE = 100;
+    public static final int DEFAULT_RECT_RADIUS = 100;
 
     private float mFromDegrees = DEFAULT_FROM_DEGREES;
 
@@ -58,7 +63,7 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
 
     private boolean mExpanded = false;
 
-    private SparseArray<Rect> mChildRects = new SparseArray<>();
+    private ArrayList<View> mChildViews = new ArrayList<>();
 
     private float mCenterX;
     private float mCenterY;
@@ -70,17 +75,15 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
     final GestureDetector gestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
         @Override
         public void onLongPress(MotionEvent e) {
-            Log.d(TAG, "Long press detected");
-            mCenterX = e.getRawX() - mChildSize / 3;
-            mCenterY = e.getRawY() - mChildSize / 3;
+            mCenterX = e.getRawX();
+            mCenterY = e.getRawY();
             confirmDegreeRangeByCenter(mCenterX, mCenterY);
             PinterestView.this.setVisibility(View.VISIBLE);
-            switchState(true);
+            switchState();
         }
 
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
-            Log.d(TAG, "Single Click");
             if (mPinMenuClickListener != null) {
                 mPinMenuClickListener.onPreViewClick();
             }
@@ -100,8 +103,8 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
         createTipsPopWindow(context);
         if (attrs != null) {
             TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.PinterestView, 0, 0);
-            mFromDegrees = a.getFloat(R.styleable.PinterestView_fromDegrees, DEFAULT_FROM_DEGREES);
-            mToDegrees = a.getFloat(R.styleable.PinterestView_toDegrees, DEFAULT_TO_DEGREES);
+//            mFromDegrees = a.getFloat(R.styleable.PinterestView_fromDegrees, DEFAULT_FROM_DEGREES);
+//            mToDegrees = a.getFloat(R.styleable.PinterestView_toDegrees, DEFAULT_TO_DEGREES);
             mChildSize = a.getDimensionPixelSize(R.styleable.PinterestView_childSize, DEFAULT_CHILD_SIZE);
             a.recycle();
         }
@@ -118,6 +121,130 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
         return gestureDetector.onTouchEvent(event);
     }
 
+
+    private static double distSq(double x1, double y1, double x2, double y2) {
+        return Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2);
+    }
+
+    /**
+     * find the nearest child view
+     */
+    private static View nearest(float x, float y, List<View> views) {
+        double minDistSq = Double.MAX_VALUE;
+        View minView = null;
+
+        for (View view : views) {
+            double distSq = distSq(x, y, view.getX() + view.getMeasuredWidth() / 2,
+                    view.getY() + view.getMeasuredHeight() / 2);
+
+            if (distSq < Math.pow(1.2f * view.getMeasuredWidth(), 2) && distSq < minDistSq) {
+                minDistSq = distSq;
+                minView = view;
+            }
+        }
+
+        return minView;
+    }
+
+    private void handleTouchEvent(MotionEvent event) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_MOVE:
+                //only listen ACTION_MOVE when PinterestView is visible
+                if (PinterestView.this.getVisibility() == VISIBLE) {
+
+                    View nearest = nearest(event.getX(),event.getY(),mChildViews);
+
+                    if(nearest != null){
+                        float centerNearestX = nearest.getX() + nearest.getWidth() / 2;
+                        float centerNearestY = nearest.getY() + nearest.getHeight() / 2;
+                        float distance = (float) Math.sqrt(distSq(centerNearestX, centerNearestY, mCenterX, mCenterY));
+                        float scaleRatio = distance / nearest.getMeasuredWidth() < 1 ? 1 : distance / nearest.getMeasuredWidth();
+                        scaleRatio = scaleRatio > 1.2f ? 1.2f : scaleRatio;
+                        nearest.setScaleX(scaleRatio);
+                        nearest.setScaleY(scaleRatio);
+                        ((CircleImageView) nearest).setFillColor(mContext.getResources().getColor(R.color.colorPrimary));
+                         //TODO let the popWindow not flash
+                        if (mPopTips.isShowing()) {
+                            mPopTips.dismiss();
+                        }else {
+                            mPopTips.showAsDropDown(nearest, 0, -mChildSize * 2);
+                        }
+                        ((TextView) mPopTips.getContentView()).setText((String) nearest.getTag());
+                        for (View view : mChildViews) {
+                            if(view != nearest) {
+                                ((CircleImageView) view).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
+                                view.setScaleX(1);
+                                view.setScaleY(1);
+                            }
+                        }
+                    }else {
+                        mPopTips.dismiss();
+                        for (View view : mChildViews) {
+                            view.setScaleX(1);
+                            view.setScaleY(1);
+                        }
+                    }
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                if (PinterestView.this.getVisibility() == VISIBLE) {
+                    mPopTips.dismiss();
+                    View nearest = nearest(event.getX(),event.getY(),mChildViews);
+                    if(nearest != null){
+                        mPinMenuClickListener.onMenuItemClick(mChildViews.indexOf(nearest));
+                    }
+                    switchState();
+                }
+                break;
+        }
+    }
+
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+//        //Screen width and height
+        setMeasuredDimension(mContext.getResources().getDisplayMetrics().widthPixels, mContext.getResources().getDisplayMetrics().heightPixels);
+
+        final int count = getChildCount();
+        for (int i = 0; i < count; i++) {
+            getChildAt(i).measure(MeasureSpec.makeMeasureSpec(mChildSize, MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(mChildSize, MeasureSpec.EXACTLY));
+        }
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+
+        int location[] = new int[2];
+        getLocationOnScreen(location);
+        mCenterY = mCenterY + location[1];
+
+        final int childCount = getChildCount();
+        //single degrees
+        final float perDegrees = (mToDegrees - mFromDegrees)/(childCount - 1);
+
+        float degrees = mFromDegrees;
+
+        mChildViews.clear();
+        for (int i = 0; i < getChildCount(); i++) {
+            mChildViews.add(getChildAt(i));
+        }
+
+        //add centerView
+        Rect centerRect = computeChildFrame(mCenterX, mCenterY, 0, perDegrees, mChildSize);
+        getChildAt(0).layout(centerRect.left, centerRect.top, centerRect.right, centerRect.bottom);
+        degrees += perDegrees;
+        //add other view
+        for (int i = 1; i < childCount; i++) {
+            Rect frame = computeChildFrame(mCenterX, mCenterY, mRadius, degrees, mChildSize);
+            if (i == 1) {
+                Log.i("computeChildFrame:", frame + "");
+            }
+            degrees += perDegrees;
+            getChildAt(i).layout(frame.left, frame.top, frame.right, frame.bottom);
+        }
+    }
+
     private void createTipsPopWindow(Context context) {
         TextView tips = new TextView(context);
         tips.setTypeface(null, Typeface.BOLD);
@@ -129,133 +256,64 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
 
     private void confirmDegreeRangeByCenter(float centerX, float centerY) {
         DisplayMetrics metrics = mContext.getResources().getDisplayMetrics();
+
         //left-top (-60,90)
-        Rect leftTopRect = new Rect(0, 0, dp2px(DEFAULT_RECT_MARGIN_SIZE), dp2px(DEFAULT_RECT_MARGIN_SIZE));
+        Rect leftTopRect = new Rect(0, 0, dp2px(DEFAULT_RECT_RADIUS), dp2px(DEFAULT_RECT_RADIUS));
 
         //top (-10,140)
-        Rect topRect = new Rect(dp2px(DEFAULT_RECT_MARGIN_SIZE), 0, metrics.widthPixels - dp2px(DEFAULT_RECT_MARGIN_SIZE), dp2px(DEFAULT_RECT_MARGIN_SIZE));
+        Rect topRect = new Rect(dp2px(DEFAULT_RECT_RADIUS), 0, metrics.widthPixels - dp2px(DEFAULT_RECT_RADIUS), dp2px(DEFAULT_RECT_RADIUS));
 
         //right-top  50,200
-        Rect rightTopRect = new Rect(metrics.widthPixels - dp2px(DEFAULT_RECT_MARGIN_SIZE), 0, metrics.widthPixels, dp2px(DEFAULT_RECT_MARGIN_SIZE));
+        Rect rightTopRect = new Rect(metrics.widthPixels - dp2px(DEFAULT_RECT_RADIUS), 0, metrics.widthPixels, dp2px(DEFAULT_RECT_RADIUS));
 
         //left -100,50
-        Rect leftRect = new Rect(0, dp2px(DEFAULT_RECT_MARGIN_SIZE), dp2px(DEFAULT_RECT_MARGIN_SIZE), metrics.heightPixels - dp2px(DEFAULT_RECT_MARGIN_SIZE));
+        Rect leftRect = new Rect(0, dp2px(DEFAULT_RECT_RADIUS), dp2px(DEFAULT_RECT_RADIUS), metrics.heightPixels - dp2px(DEFAULT_RECT_RADIUS));
 
         //right 80,230
-        Rect rightRect = new Rect(metrics.widthPixels - dp2px(DEFAULT_RECT_MARGIN_SIZE), dp2px(DEFAULT_RECT_MARGIN_SIZE), metrics.widthPixels, metrics.heightPixels - dp2px(DEFAULT_RECT_MARGIN_SIZE));
+        Rect rightRect = new Rect(metrics.widthPixels - dp2px(DEFAULT_RECT_RADIUS), dp2px(DEFAULT_RECT_RADIUS), metrics.widthPixels, metrics.heightPixels - dp2px(DEFAULT_RECT_RADIUS));
 
         //left_bottom -140,10
-        Rect leftBottomRect = new Rect(0, metrics.heightPixels - dp2px(DEFAULT_RECT_MARGIN_SIZE), dp2px(DEFAULT_RECT_MARGIN_SIZE), metrics.heightPixels);
+        Rect leftBottomRect = new Rect(0, metrics.heightPixels - dp2px(DEFAULT_RECT_RADIUS), dp2px(DEFAULT_RECT_RADIUS), metrics.heightPixels);
         //bottom  170,320
-        Rect bottomRect = new Rect(dp2px(DEFAULT_RECT_MARGIN_SIZE), metrics.heightPixels - dp2px(DEFAULT_RECT_MARGIN_SIZE), metrics.widthPixels - dp2px(DEFAULT_RECT_MARGIN_SIZE), metrics.heightPixels);
+        Rect bottomRect = new Rect(dp2px(DEFAULT_RECT_RADIUS), metrics.heightPixels - dp2px(DEFAULT_RECT_RADIUS), metrics.widthPixels - dp2px(DEFAULT_RECT_RADIUS), metrics.heightPixels);
         //right_bottom 150,300 and center
-        Rect rightBottomRect = new Rect(metrics.widthPixels - dp2px(DEFAULT_RECT_MARGIN_SIZE), metrics.heightPixels - dp2px(DEFAULT_RECT_MARGIN_SIZE), metrics.widthPixels, metrics.heightPixels);
-        Rect centerRect = new Rect(dp2px(DEFAULT_RECT_MARGIN_SIZE), dp2px(DEFAULT_RECT_MARGIN_SIZE), metrics.widthPixels - dp2px(DEFAULT_RECT_MARGIN_SIZE), metrics.heightPixels - dp2px(DEFAULT_RECT_MARGIN_SIZE));
+        Rect rightBottomRect = new Rect(metrics.widthPixels - dp2px(DEFAULT_RECT_RADIUS), metrics.heightPixels - dp2px(DEFAULT_RECT_RADIUS), metrics.widthPixels, metrics.heightPixels);
+        Rect centerRect = new Rect(dp2px(DEFAULT_RECT_RADIUS), dp2px(DEFAULT_RECT_RADIUS), metrics.widthPixels - dp2px(DEFAULT_RECT_RADIUS), metrics.heightPixels - dp2px(DEFAULT_RECT_RADIUS));
 
         if (leftTopRect.contains((int) centerX, (int) centerY)) {
             mFromDegrees = -60;
             mToDegrees = 90;
-            Log.i(TAG, "leftTopRect");
         } else if (topRect.contains((int) centerX, (int) centerY)) {
             mFromDegrees = -10;
             mToDegrees = 150;
-            Log.i(TAG, "topRect");
         } else if (rightTopRect.contains((int) centerX, (int) centerY)) {
             mFromDegrees = 50;
             mToDegrees = 200;
-            Log.i(TAG, "rightTopRect");
         } else if (leftRect.contains((int) centerX, (int) centerY)) {
             mFromDegrees = -100;
             mToDegrees = 50;
-            Log.i(TAG, "leftRect");
         } else if (rightRect.contains((int) centerX, (int) centerY)) {
             mFromDegrees = 80;
             mToDegrees = 230;
-            Log.i(TAG, "rightRect");
         } else if (leftBottomRect.contains((int) centerX, (int) centerY)) {
             mFromDegrees = -140;
             mToDegrees = 10;
-            Log.i(TAG, "leftBottomRect");
         } else if (bottomRect.contains((int) centerX, (int) centerY)) {
             mFromDegrees = 170;
             mToDegrees = 320;
-            Log.i(TAG, "bottomRect");
         } else if (rightBottomRect.contains((int) centerX, (int) centerY) || centerRect.contains((int) centerX, (int) centerY)) {
             mFromDegrees = 150;
             mToDegrees = 300;
-            Log.i(TAG, "rightBottomRect");
         }
         requestLayout();
 
     }
 
-    private void handleTouchEvent(MotionEvent event) {
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_MOVE:
-                //only listen ACTION_MOVE when PinterestView is visible
-                if (PinterestView.this.getVisibility() == VISIBLE) {
-                    for (int i = 0; i < mChildRects.size(); i++) {
-                        Rect rect = mChildRects.valueAt(i);
-                        boolean contains = rect.contains((int) event.getRawX(), (int) event.getRawY());
-                        if (contains) {
-                            ((CircleImageView) getChildAt(mChildRects.keyAt(i))).setFillColor(mContext.getResources().getColor(R.color.colorPrimary));
-                            getChildAt(mChildRects.keyAt(i)).setScaleX(1.3f);
-                            getChildAt(mChildRects.keyAt(i)).setScaleY(1.3f);
-                            if (!mPopTips.isShowing())
-                                mPopTips.showAsDropDown(getChildAt(mChildRects.keyAt(i)), 0, -mChildSize * 2);
-                            ((TextView) mPopTips.getContentView()).setText((String) getChildAt(mChildRects.keyAt(i)).getTag());
-
-                            for (int j = 0; j < mChildRects.size(); j++) {
-                                if (j != i) {
-                                    Log.i(TAG, "recover position:" + (String) getChildAt(mChildRects.keyAt(j)).getTag());
-                                    ((CircleImageView) getChildAt(mChildRects.keyAt(j))).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
-                                    getChildAt(mChildRects.keyAt(j)).setScaleX(1);
-                                    getChildAt(mChildRects.keyAt(j)).setScaleY(1);
-                                }
-                            }
-                            break;
-                        } else {
-                            mPopTips.dismiss();
-                            ((CircleImageView) getChildAt(mChildRects.keyAt(i))).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
-                            getChildAt(mChildRects.keyAt(i)).setScaleX(1);
-                            getChildAt(mChildRects.keyAt(i)).setScaleY(1);
-                        }
-
-
-                    }
-
-                }
-                break;
-//            case MotionEvent.ACTION_CANCEL://why this will cause RecyclerView get scroll listener??
-            case MotionEvent.ACTION_UP:
-                if (PinterestView.this.getVisibility() == VISIBLE) {
-                    mPopTips.dismiss();
-                    Log.i(TAG, "ACTION_UP--CHOOSE ONE---");
-                    for (int i = 0; i < mChildRects.size(); i++) {
-                        Rect rect = mChildRects.valueAt(i);
-                        boolean contains = rect.contains((int) event.getRawX(), (int) event.getRawY());
-                        if (contains) {
-                            mPinMenuClickListener.onMenuItemClick(mChildRects.keyAt(i));
-                            getChildAt(mChildRects.keyAt(i)).setScaleX(1);
-                            getChildAt(mChildRects.keyAt(i)).setScaleY(1);
-                        }
-                    }
-                    switchState(true);
-                }
-                break;
-        }
-    }
-
     private Rect getChildDisPlayBounds(View view) {
-        int[] location = new int[2];
-        view.getLocationOnScreen(location);
         //scale the rect range
         Rect rect = new Rect();
-        rect.left = location[0] + view.getWidth() / 4;
-        rect.top = location[1] - view.getHeight() / 4;
-        rect.right = location[0] + view.getWidth() * 3 / 4;
-        rect.bottom = location[1] - view.getHeight() * 3 / 4;
-        return new Rect(location[0], location[1], location[0] + getChildAt(1).getWidth(), location[1] + getChildAt(1).getHeight());
+        view.getHitRect(rect);
+        return rect;
     }
 
     private void bindChildAnimation(final View child, final int position) {
@@ -264,7 +322,6 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
             @Override
             public void onGlobalLayout() {
                 Rect childRect = getChildDisPlayBounds(child);
-                mChildRects.put(position, childRect);
                 if (mExpanded) {
                     expandAnimation(child, childRect);
                 }
@@ -377,75 +434,17 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
     }
 
 
-    public void switchState(final boolean showAnimation) {
+    public void switchState() {
         mExpanded = !mExpanded;
         final int childCount = getChildCount();
-        if (showAnimation) {
-            mChildRects.clear();
-            //other view
-            for (int i = 1; i < childCount; i++) {
-                ((CircleImageView) getChildAt(i)).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
-                bindChildAnimation(getChildAt(i), i);
-            }
-            //center view
-            bindCenterViewAnimation(getChildAt(0));
-        }
-
-    }
-
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        setMeasuredDimension(mContext.getResources().getDisplayMetrics().widthPixels, mContext.getResources().getDisplayMetrics().heightPixels);
-
-        final int count = getChildCount();
-        for (int i = 0; i < count; i++) {
-            getChildAt(i).measure(MeasureSpec.makeMeasureSpec(mChildSize, MeasureSpec.EXACTLY),
-                    MeasureSpec.makeMeasureSpec(mChildSize, MeasureSpec.EXACTLY));
-        }
-    }
-
-    @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        final float centerX;
-        final float centerY;
-        centerX = mCenterX == 0 ? getWidth() / 2 : mCenterX;
-        centerY = mCenterY == 0 ? getHeight() / 2 : mCenterY - mRadius;
-
-        final int childCount = getChildCount();
-        //single degrees
-        final float perDegrees = (mToDegrees - mFromDegrees) / (childCount - 1);
-
-        float degrees = mFromDegrees;
-        //add centerView
-        Rect centerRect = computeChildFrame(centerX, centerY, 0, perDegrees, mChildSize);
-        getChildAt(0).layout(centerRect.left, centerRect.top, centerRect.right, centerRect.bottom);
-        degrees += perDegrees;
-        //add other view
+        //other view
         for (int i = 1; i < childCount; i++) {
-            Rect frame = computeChildFrame(centerX, centerY, mRadius, degrees, mChildSize);
-            if (i == 1) {
-                Log.i("computeChildFrame:", frame + "");
-            }
-            degrees += perDegrees;
-            getChildAt(i).layout(frame.left, frame.top, frame.right, frame.bottom);
+            ((CircleImageView) getChildAt(i)).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
+            bindChildAnimation(getChildAt(i), i);
         }
-    }
+        //center view
+        bindCenterViewAnimation(getChildAt(0));
 
-    /**
-     * set Pinterest Menu show degrees range
-     *
-     * @param fromDegrees
-     * @param toDegrees
-     */
-    public void setArc(float fromDegrees, float toDegrees) {
-        if (mFromDegrees == fromDegrees && mToDegrees == toDegrees) {
-            return;
-        }
-
-        mFromDegrees = fromDegrees;
-        mToDegrees = toDegrees;
-        requestLayout();
     }
 
     /**

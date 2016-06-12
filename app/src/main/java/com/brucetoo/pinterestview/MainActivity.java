@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
          * just for cover the whole screen
          */
         pinterestView = (PinterestView) findViewById(R.id.item_layout);
+
         /**
          * add item view into pinterestView
          */
