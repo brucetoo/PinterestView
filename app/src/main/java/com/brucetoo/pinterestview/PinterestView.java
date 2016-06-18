@@ -1,9 +1,5 @@
 package com.brucetoo.pinterestview;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
@@ -26,22 +22,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-
 /**
  * Created by Bruce Too
  * On 10/2/15.
  * At 11:10
- * TODO get pin view top location...
  */
-public class PinterestView extends ViewGroup implements View.OnTouchListener{
+public class PinterestView extends ViewGroup implements View.OnTouchListener {
 
     private final static String TAG = "PinterestView";
 
-    private final static int ANIMATION_DURATION = 200;
+    private final static int EXPAND_ANIMATION_DURATION = 200;
+
+    private final static int SCALE_ANIMATION_DURATION = 100;
+
+    private final static float MAX_SCALE = 1.2f;
 
     private int mChildSize;
-
-    public static final float DEFAULT_BETWTEEN_ANGLE = 30;
 
     public static final float DEFAULT_FROM_DEGREES = -90.0f;
 
@@ -72,11 +68,15 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener{
 
     private PopupWindow mPopTips;
 
+    private Rect mInner = new Rect();
+    private View mLastNearestView;
+
     final GestureDetector gestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
         @Override
         public void onLongPress(MotionEvent e) {
             mCenterX = e.getRawX();
             mCenterY = e.getRawY();
+            Log.i(TAG, "centerX:" + mCenterX + "  centerY:" + mCenterY);
             confirmDegreeRangeByCenter(mCenterX, mCenterY);
             PinterestView.this.setVisibility(View.VISIBLE);
             switchState();
@@ -129,13 +129,15 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener{
     /**
      * find the nearest child view
      */
-    private static View nearest(float x, float y, List<View> views) {
+    private View nearest(float x, float y, List<View> views) {
         double minDistSq = Double.MAX_VALUE;
         View minView = null;
 
         for (View view : views) {
-            double distSq = distSq(x, y, view.getX() + view.getMeasuredWidth() / 2,
-                    view.getY() + view.getMeasuredHeight() / 2);
+            Rect rect = new Rect();
+            view.getGlobalVisibleRect(rect);
+            double distSq = distSq(x, y, rect.centerX(),
+                    rect.centerY());
 
             if (distSq < Math.pow(1.2f * view.getMeasuredWidth(), 2) && distSq < minDistSq) {
                 minDistSq = distSq;
@@ -152,36 +154,31 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener{
                 //only listen ACTION_MOVE when PinterestView is visible
                 if (PinterestView.this.getVisibility() == VISIBLE) {
 
-                    View nearest = nearest(event.getX(),event.getY(),mChildViews);
+                    View nearest = nearest(event.getRawX(), event.getRawY(), mChildViews);
+                    if (nearest != null) {
+                        if (mLastNearestView != null && mLastNearestView == nearest) return;
 
-                    if(nearest != null){
-                        float centerNearestX = nearest.getX() + nearest.getWidth() / 2;
-                        float centerNearestY = nearest.getY() + nearest.getHeight() / 2;
-                        float distance = (float) Math.sqrt(distSq(centerNearestX, centerNearestY, mCenterX, mCenterY));
-                        float scaleRatio = distance / nearest.getMeasuredWidth() < 1 ? 1 : distance / nearest.getMeasuredWidth();
-                        scaleRatio = scaleRatio > 1.2f ? 1.2f : scaleRatio;
-                        nearest.setScaleX(scaleRatio);
-                        nearest.setScaleY(scaleRatio);
+                        DurX.putOn(nearest).animate().scale(MAX_SCALE).duration(SCALE_ANIMATION_DURATION);
                         ((CircleImageView) nearest).setFillColor(mContext.getResources().getColor(R.color.colorPrimary));
-                         //TODO let the popWindow not flash
                         if (mPopTips.isShowing()) {
                             mPopTips.dismiss();
-                        }else {
-                            mPopTips.showAsDropDown(nearest, 0, -mChildSize * 2);
                         }
+                        mPopTips.showAsDropDown(nearest, -mChildSize / 5, -mChildSize * 2);
                         ((TextView) mPopTips.getContentView()).setText((String) nearest.getTag());
                         for (View view : mChildViews) {
-                            if(view != nearest) {
+                            if (view != nearest) {
                                 ((CircleImageView) view).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
-                                view.setScaleX(1);
-                                view.setScaleY(1);
+                                DurX.putOn(view).animate().scale(1).duration(SCALE_ANIMATION_DURATION);
                             }
                         }
-                    }else {
+                        mLastNearestView = nearest;
+                    } else {
+                        mLastNearestView = null;
                         mPopTips.dismiss();
                         for (View view : mChildViews) {
                             view.setScaleX(1);
                             view.setScaleY(1);
+                            ((CircleImageView) view).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
                         }
                     }
                 }
@@ -189,9 +186,9 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener{
             case MotionEvent.ACTION_UP:
                 if (PinterestView.this.getVisibility() == VISIBLE) {
                     mPopTips.dismiss();
-                    View nearest = nearest(event.getX(),event.getY(),mChildViews);
-                    if(nearest != null){
-                        mPinMenuClickListener.onMenuItemClick(mChildViews.indexOf(nearest));
+                    View nearest = nearest(event.getRawX(), event.getRawY(), mChildViews);
+                    if (nearest != null && nearest.getTag() != null) {
+                        mPinMenuClickListener.onMenuItemClick(nearest);
                     }
                     switchState();
                 }
@@ -215,18 +212,23 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener{
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
 
-        int location[] = new int[2];
-        getLocationOnScreen(location);
-        mCenterY = mCenterY + location[1];
+        //get PintertestView Height
+        getGlobalVisibleRect(mInner);
+        //distance from screen top
+        float innerTop = getResources().getDisplayMetrics().heightPixels - (mInner.bottom - mInner.top);
+
+        mCenterY = mCenterY - innerTop;
+        Log.i(TAG, "innerTop:" + innerTop + " centerX:" + mCenterX + "  centerY:" + mCenterY);
 
         final int childCount = getChildCount();
         //single degrees
-        final float perDegrees = (mToDegrees - mFromDegrees)/(childCount - 1);
+        final float perDegrees = (mToDegrees - mFromDegrees) / (childCount - 1);
 
         float degrees = mFromDegrees;
 
         mChildViews.clear();
-        for (int i = 0; i < getChildCount(); i++) {
+        //Note if i = 1 indicate ignore the center view
+        for (int i = 1; i < getChildCount(); i++) {
             mChildViews.add(getChildAt(i));
         }
 
@@ -334,43 +336,34 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener{
     }
 
     private void collapseAnimation(View child, Rect childRect) {
-        AnimatorSet childAnim = new AnimatorSet();
-        ObjectAnimator transX = ObjectAnimator.ofFloat(child, "translationX", 0, (mCenterX - childRect.exactCenterX()) / 2);
-        ObjectAnimator transY = ObjectAnimator.ofFloat(child, "translationY", 0, (mCenterY - childRect.exactCenterY()) / 2);
-        ObjectAnimator alpha = ObjectAnimator.ofFloat(child, "alpha", 1, (int) 0.5);
-        childAnim.playTogether(transX, transY, alpha);
-        childAnim.setDuration(ANIMATION_DURATION);
-        childAnim.setInterpolator(new AccelerateInterpolator());
-        childAnim.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-//                PinterestView.this.setVisibility(GONE);
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                recoverChildView();
-                PinterestView.this.setVisibility(GONE);
-            }
-        });
-        childAnim.start();
+        DurX.putOn(child).animate()
+                .translationX(0, (mCenterX - childRect.exactCenterX()) / 2)
+                .translationY(0, (mCenterY - childRect.exactCenterY()) / 2)
+                .alpha(0.5f)
+                .duration(EXPAND_ANIMATION_DURATION)
+                .interpolator(new AccelerateInterpolator())
+                .end(new DurX.Listeners.End() {
+                    @Override
+                    public void onEnd() {
+                        recoverChildView();
+                        PinterestView.this.setVisibility(GONE);
+                    }
+                });
     }
 
     private void expandAnimation(View child, Rect childRect) {
-        AnimatorSet childAnim = new AnimatorSet();
-        ObjectAnimator transX = ObjectAnimator.ofFloat(child, "translationX", (mCenterX - childRect.exactCenterX()) / 2, 0);
-        ObjectAnimator transY = ObjectAnimator.ofFloat(child, "translationY", (mCenterY - childRect.exactCenterY()) / 2, 0);
-        ObjectAnimator alpha = ObjectAnimator.ofFloat(child, "alpha", (int) 0.5, 1);
-        childAnim.playTogether(transX, transY, alpha);
-        childAnim.setDuration(ANIMATION_DURATION);
-        childAnim.setInterpolator(new AccelerateInterpolator());
-        childAnim.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                recoverChildView();
-            }
-        });
-        childAnim.start();
+        DurX.putOn(child).animate()
+                .translationX((mCenterX - childRect.exactCenterX()) / 2, 0)
+                .translationY((mCenterY - childRect.exactCenterY()) / 2, 0)
+                .alpha(0.5f, 1)
+                .duration(EXPAND_ANIMATION_DURATION)
+                .interpolator(new AccelerateInterpolator())
+                .end(new DurX.Listeners.End() {
+                    @Override
+                    public void onEnd() {
+                        recoverChildView();
+                    }
+                });
     }
 
 
@@ -380,46 +373,29 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener{
      * @param child
      */
     private void bindCenterViewAnimation(View child) {
-        AnimatorSet childAnim;
-        if (mExpanded) {
-            childAnim = new AnimatorSet();
-            ObjectAnimator scaleX = ObjectAnimator.ofFloat(child, "scaleX", (int) 0.5, 1);
-            ObjectAnimator scaleY = ObjectAnimator.ofFloat(child, "scaleY", (int) 0.5, 1);
-            ObjectAnimator alpha = ObjectAnimator.ofFloat(child, "alpha", (int) 0.5, 1);
-            childAnim.playTogether(scaleX, scaleY, alpha);
-            childAnim.setDuration(ANIMATION_DURATION);
-            childAnim.setInterpolator(new AccelerateInterpolator());
-            childAnim.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    recoverChildView();
-                }
-            });
-            childAnim.start();
-        } else {
-            childAnim = new AnimatorSet();
-            ObjectAnimator scaleX = ObjectAnimator.ofFloat(child, "scaleX", 1, (int) 0.5);
-            ObjectAnimator scaleY = ObjectAnimator.ofFloat(child, "scaleY", 1, (int) 0.5);
-            ObjectAnimator alpha = ObjectAnimator.ofFloat(child, "alpha", 1, (int) 0.5);
-            childAnim.playTogether(scaleX, scaleY, alpha);
-            childAnim.setDuration(ANIMATION_DURATION);
-            childAnim.setInterpolator(new AccelerateInterpolator());
-            childAnim.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    recoverChildView();
-                    PinterestView.this.setVisibility(GONE);
-                }
-            });
-            childAnim.start();
-        }
-
+        float from = mExpanded ? 0.5f : 1.0f;
+        float to = mExpanded ? 1.0f : 0.5f;
+        DurX.putOn(child).animate()
+                .scale(from, to)
+                .alpha(from, to)
+                .duration(EXPAND_ANIMATION_DURATION)
+                .interpolator(new AccelerateInterpolator())
+                .end(new DurX.Listeners.End() {
+                    @Override
+                    public void onEnd() {
+                        recoverChildView();
+                        if (!mExpanded) {
+                            PinterestView.this.setVisibility(GONE);
+                        }
+                    }
+                });
     }
 
     private void recoverChildView() {
         final int childCount = getChildCount();
         for (int i = 0; i < childCount; i++) {
-            getChildAt(i).animate().setDuration(100).translationX(0).translationY(0).scaleX(1).scaleX(1).start();
+//            getChildAt(i).animate().setDuration(100).translationX(0).translationY(0).scaleX(1).scaleX(1).start();
+            DurX.putOn(getChildAt(i)).scale(1).translation(0f, 0f);
         }
     }
 
@@ -496,9 +472,9 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener{
         /**
          * PinterestView item click
          *
-         * @param childAt position in PinterestView
+         * @param checkedView view has be checked
          */
-        void onMenuItemClick(int childAt);
+        void onMenuItemClick(View checkedView);
 
         /**
          * preview(the view click to show pinterestview) click

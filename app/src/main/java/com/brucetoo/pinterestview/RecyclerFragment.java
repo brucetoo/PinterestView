@@ -48,9 +48,8 @@ public class RecyclerFragment extends Fragment {
         pinterestView.setPinClickListener(new PinterestView.PinMenuClickListener() {
 
             @Override
-            public void onMenuItemClick(int childAt) {
-                String tips = (String) pinterestView.getChildAt(childAt).getTag();
-                Toast.makeText(getActivity(), tips + " clicked!", Toast.LENGTH_SHORT).show();
+            public void onMenuItemClick(View view) {
+                Toast.makeText(getActivity(), view.getTag() + " clicked!", Toast.LENGTH_SHORT).show();
             }
 
             @Override
