@@ -63,6 +63,8 @@
 
 ##  TODO
 
+Reformat the code,working on...
+
 1. Enhance the item choose animation(More smooth),Working on...
 
 2. ~~Add more default Degree Range(Demo use 150° - 300°,just for testing)~~
