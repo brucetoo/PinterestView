@@ -356,7 +356,7 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
                 .translationX((mCenterX - childRect.exactCenterX()) / 2, 0)
                 .translationY((mCenterY - childRect.exactCenterY()) / 2, 0)
                 .alpha(0.5f, 1)
-                .duration(EXPAND_ANIMATION_DURATION)
+                .duration(EXPAND_ANIMATION_DURATION / 2)
                 .interpolator(new AccelerateInterpolator())
                 .end(new DurX.Listeners.End() {
                     @Override
