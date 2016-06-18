@@ -208,7 +208,6 @@ public class DurX {
             if (durXAnimator != null && durXAnimator.endListener != null) {
                 Listeners.End endListener = durXAnimator.endListener.get();
                 if (endListener != null) {
-                    Log.e("ddddddd","-----");
                     endListener.onEnd();
                 }
             }
