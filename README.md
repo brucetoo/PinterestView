@@ -57,20 +57,13 @@
         android:layout_height="match_parent"
         android:background="#50000000"
         custom:childSize="44px"
-        android:visibility="gone"
-        custom:fromDegrees="150.0"
-        custom:toDegrees="300.0" />
-        
-        //Note,this two params don'n need now,it can be auto compute 
-        //degrees range by position u click(a little bit coarse)
-        custom:fromDegrees="150.0"
-        custom:toDegrees="300.0"
+        android:visibility="gone" />
 
 ```
 
 ##  TODO
 
-1. Enhance the item choose animation(More smooth),But how????
+1. Enhance the item choose animation(More smooth),Working on...
 
 2. ~~Add more default Degree Range(Demo use 150° - 300°,just for testing)~~
 
@@ -82,7 +75,7 @@
 
 6. ~~Add branch "RecyclerView-demo" to show how to use with RecyclerView~~
 
-7. PinterestView show more accurately by the position click
+7. ~~PinterestView show more accurately by the position click~~ DONE
 
 ## License
 
