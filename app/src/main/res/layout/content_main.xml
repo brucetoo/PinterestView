@@ -94,6 +94,7 @@
         android:background="#50000000"
         custom:child_size="44dp"
         custom:child_radius="80dp"
+        custom:child_max_scale="1.2"
         custom:tips_color="@android:color/white"
         custom:tips_size="15sp"
         custom:tips_background="@drawable/shape_child_item"

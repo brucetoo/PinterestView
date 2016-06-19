@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
         /**
          * add item view into pinterestView
          */
-        pinterestView.addShowView(40, createChildView(R.drawable.googleplus,"")
+        pinterestView.addMenuItem(createChildView(R.drawable.googleplus,"")
         , createChildView(R.drawable.linkedin,"linkedin"), createChildView(R.drawable.twitter,"twitter")
         , createChildView(R.drawable.pinterest,"pinterest"));
         /**
@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onPreViewClick() {
+            public void onAnchorViewClick() {
                 Toast.makeText(MainActivity.this, "button clicked!", Toast.LENGTH_SHORT).show();
             }
         });

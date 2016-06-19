@@ -4,6 +4,7 @@
 	<declare-styleable name="PinterestView">
         <attr name="child_size" format="dimension|float"/>
         <attr name="child_radius" format="dimension"/>
+        <attr name="child_max_scale" format="float"/>
         <attr name="tips_color" format="color"/>
         <attr name="tips_background" format="reference"/>
         <attr name="tips_size" format="dimension"/>

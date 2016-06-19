@@ -42,7 +42,7 @@ public class RecyclerFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         recyclerView = (RecyclerView) view.findViewById(R.id.recycler);
         pinterestView = (PinterestView) view.findViewById(R.id.pin_view);
-        pinterestView.addShowView(40, createChildView(R.drawable.googleplus, "")
+        pinterestView.addMenuItem(createChildView(R.drawable.googleplus, "")
                 , createChildView(R.drawable.linkedin, "linkedin"), createChildView(R.drawable.twitter, "twitter")
                 , createChildView(R.drawable.pinterest, "pinterest"));
         pinterestView.setPinClickListener(new PinterestView.PinMenuClickListener() {
@@ -53,7 +53,7 @@ public class RecyclerFragment extends Fragment {
             }
 
             @Override
-            public void onPreViewClick() {
+            public void onAnchorViewClick() {
                 Toast.makeText(getActivity(), "item clicked!", Toast.LENGTH_SHORT).show();
             }
         });

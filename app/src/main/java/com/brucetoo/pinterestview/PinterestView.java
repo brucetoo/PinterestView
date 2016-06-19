@@ -68,6 +68,8 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
 
     private int mRadius;
 
+    private float mMaxScale;
+
     private Context mContext;
 
     private boolean mExpanded = false;
@@ -83,6 +85,7 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
 
     private Rect mInner = new Rect();
     private View mLastNearestView;
+    private boolean mIsAnimating;
 
     final GestureDetector gestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
         @Override
@@ -98,7 +101,7 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
             if (mPinMenuClickListener != null) {
-                mPinMenuClickListener.onPreViewClick();
+                mPinMenuClickListener.onAnchorViewClick();
             }
             return true;
         }
@@ -119,6 +122,7 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
             mTipsBackground = a.getResourceId(R.styleable.PinterestView_tips_background, DEFAULT_TIPS_BACKGROUND);
             mTipsSize = a.getDimensionPixelSize(R.styleable.PinterestView_tips_size, DEFAULT_TIPS_SIZE);
             mRadius = a.getDimensionPixelOffset(R.styleable.PinterestView_child_radius, dp2px(DEFAULT_RADIUS));
+            mMaxScale = a.getFloat(R.styleable.PinterestView_child_max_scale,MAX_SCALE);
             createTipsPopWindow(context);
             a.recycle();
         }
@@ -172,7 +176,7 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
                     if (nearest != null) {
                         if (mLastNearestView != null && mLastNearestView == nearest) return;
 
-                        DurX.putOn(nearest).animate().scale(MAX_SCALE).duration(SCALE_ANIMATION_DURATION);
+                        DurX.putOn(nearest).animate().scale(mMaxScale).duration(SCALE_ANIMATION_DURATION);
                         ((CircleImageView) nearest).setFillColor(mContext.getResources().getColor(R.color.colorPrimary));
                         if (mPopTips.isShowing()) {
                             mPopTips.dismiss();
@@ -182,7 +186,9 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
                         int width = contentView.getMeasuredWidth();
                         int offsetLeft = width == 0 ? -mChildSize / 4 : (-width / 2 + mChildSize / 2);
 
-                        mPopTips.showAsDropDown(nearest, offsetLeft, -mChildSize * 2);
+                        if(!mIsAnimating) {
+                            mPopTips.showAsDropDown(nearest, offsetLeft, -mChildSize * 2);
+                        }
                         for (View view : mChildViews) {
                             if (view != nearest) {
                                 ((CircleImageView) view).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
@@ -194,8 +200,7 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
                         mLastNearestView = null;
                         mPopTips.dismiss();
                         for (View view : mChildViews) {
-                            view.setScaleX(1);
-                            view.setScaleY(1);
+                            DurX.putOn(view).scale(1);
                             ((CircleImageView) view).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
                         }
                     }
@@ -377,9 +382,16 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
                 .alpha(0.5f, 1)
                 .duration(EXPAND_ANIMATION_DURATION / 2)
                 .interpolator(new AccelerateInterpolator())
+                .start(new DurX.Listeners.Start() {
+                    @Override
+                    public void onStart() {
+                        mIsAnimating = true;
+                    }
+                })
                 .end(new DurX.Listeners.End() {
                     @Override
                     public void onEnd() {
+                        mIsAnimating = false;
                         recoverChildView();
                     }
                 });
@@ -445,15 +457,13 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
     /**
      * addView to PinterestView
      *
-     * @param size        view size
      * @param centerView
      * @param normalViews
      */
-    public void addShowView(int size, View centerView, View... normalViews) {
-        this.setChildSize(size);
+    public void addMenuItem(View centerView, View... normalViews) {
         addView(centerView, 0);
-        for (int i = 0; i < normalViews.length; i++) {
-            addView(normalViews[i]);
+        for (View normalView : normalViews) {
+            addView(normalView);
         }
     }
 
@@ -496,8 +506,8 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
         void onMenuItemClick(View checkedView);
 
         /**
-         * preview(the view click to show pinterestview) click
+         * Anchor view(the view click to show pinterestView) click
          */
-        void onPreViewClick();
+        void onAnchorViewClick();
     }
 }
