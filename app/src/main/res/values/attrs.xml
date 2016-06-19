@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-    <attr name="fromDegrees" format="float|reference" />
-    <attr name="toDegrees" format="float|reference" />
-    <attr name="childSize" format="dimension|reference" />
 
 	<declare-styleable name="PinterestView">
-        <attr name="fromDegrees"/>
-        <attr name="toDegrees"/>
-        <attr name="childSize"/>
+        <attr name="child_size" format="dimension|float"/>
+        <attr name="child_radius" format="dimension"/>
+        <attr name="tips_color" format="color"/>
+        <attr name="tips_background" format="reference"/>
+        <attr name="tips_size" format="dimension"/>
 	</declare-styleable>
 
     <declare-styleable name="CircleImageView">

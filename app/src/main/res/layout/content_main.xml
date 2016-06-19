@@ -92,6 +92,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#50000000"
-        custom:childSize="44px"
+        custom:child_size="44dp"
+        custom:child_radius="80dp"
+        custom:tips_color="@android:color/white"
+        custom:tips_size="15sp"
+        custom:tips_background="@drawable/shape_child_item"
         android:visibility="gone"/>
 </RelativeLayout>

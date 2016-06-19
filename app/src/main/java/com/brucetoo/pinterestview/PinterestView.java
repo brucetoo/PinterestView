@@ -10,6 +10,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,19 +40,31 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
 
     private int mChildSize;
 
-    public static final float DEFAULT_FROM_DEGREES = -90.0f;
+    private int mTipsColor;
 
-    public static final float DEFAULT_TO_DEGREES = -90.0f;
+    private int mTipsBackground;
 
-    public static final int DEFAULT_CHILD_SIZE = 44;
+    private int mTipsSize;
 
-    public static final int DEFAULT_RECT_RADIUS = 100;
+    private static final float DEFAULT_FROM_DEGREES = -90.0f;
+
+    private static final float DEFAULT_TO_DEGREES = -90.0f;
+
+    private static final int DEFAULT_CHILD_SIZE = 44;
+
+    private static final int DEFAULT_TIPS_COLOR = Color.WHITE;
+
+    private static final int DEFAULT_TIPS_BACKGROUND = R.drawable.shape_child_item;
+
+    private static final int DEFAULT_TIPS_SIZE = 15;
+
+    private static final int DEFAULT_RECT_RADIUS = 100;
 
     private float mFromDegrees = DEFAULT_FROM_DEGREES;
 
     private float mToDegrees = DEFAULT_TO_DEGREES;
 
-    private static final int DEFAULT_RADIUS = 160;//px
+    private static final int DEFAULT_RADIUS = 80;
 
     private int mRadius;
 
@@ -99,13 +112,14 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
     public PinterestView(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.mContext = context;
-        mRadius = dp2px(DEFAULT_RADIUS / 2);
-        createTipsPopWindow(context);
         if (attrs != null) {
             TypedArray a = getContext().obtainStyledAttributes(attrs, R.styleable.PinterestView, 0, 0);
-//            mFromDegrees = a.getFloat(R.styleable.PinterestView_fromDegrees, DEFAULT_FROM_DEGREES);
-//            mToDegrees = a.getFloat(R.styleable.PinterestView_toDegrees, DEFAULT_TO_DEGREES);
-            mChildSize = a.getDimensionPixelSize(R.styleable.PinterestView_childSize, DEFAULT_CHILD_SIZE);
+            mChildSize = a.getDimensionPixelSize(R.styleable.PinterestView_child_size, DEFAULT_CHILD_SIZE);
+            mTipsColor = a.getColor(R.styleable.PinterestView_tips_color, DEFAULT_TIPS_COLOR);
+            mTipsBackground = a.getResourceId(R.styleable.PinterestView_tips_background, DEFAULT_TIPS_BACKGROUND);
+            mTipsSize = a.getDimensionPixelSize(R.styleable.PinterestView_tips_size, DEFAULT_TIPS_SIZE);
+            mRadius = a.getDimensionPixelOffset(R.styleable.PinterestView_child_radius, dp2px(DEFAULT_RADIUS));
+            createTipsPopWindow(context);
             a.recycle();
         }
 
@@ -163,8 +177,12 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
                         if (mPopTips.isShowing()) {
                             mPopTips.dismiss();
                         }
-                        mPopTips.showAsDropDown(nearest, -mChildSize / 5, -mChildSize * 2);
-                        ((TextView) mPopTips.getContentView()).setText((String) nearest.getTag());
+                        TextView contentView = (TextView) mPopTips.getContentView();
+                        contentView.setText((String) nearest.getTag());
+                        int width = contentView.getMeasuredWidth();
+                        int offsetLeft = width == 0 ? -mChildSize / 4 : (-width / 2 + mChildSize / 2);
+
+                        mPopTips.showAsDropDown(nearest, offsetLeft, -mChildSize * 2);
                         for (View view : mChildViews) {
                             if (view != nearest) {
                                 ((CircleImageView) view).setFillColor(mContext.getResources().getColor(R.color.colorAccent));
@@ -250,9 +268,10 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
     private void createTipsPopWindow(Context context) {
         TextView tips = new TextView(context);
         tips.setTypeface(null, Typeface.BOLD);
-        tips.setTextSize(15);
-        tips.setTextColor(Color.parseColor("#ffffff"));
-        tips.setBackgroundResource(R.drawable.shape_child_item);
+        tips.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTipsSize);
+        tips.setTextColor(mTipsColor);
+        tips.setBackgroundResource(mTipsBackground);
+        tips.setGravity(Gravity.CENTER);
         mPopTips = new PopupWindow(tips, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     }
 
