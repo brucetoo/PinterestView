@@ -122,7 +122,7 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
             mTipsBackground = a.getResourceId(R.styleable.PinterestView_tips_background, DEFAULT_TIPS_BACKGROUND);
             mTipsSize = a.getDimensionPixelSize(R.styleable.PinterestView_tips_size, DEFAULT_TIPS_SIZE);
             mRadius = a.getDimensionPixelOffset(R.styleable.PinterestView_child_radius, dp2px(DEFAULT_RADIUS));
-            mMaxScale = a.getFloat(R.styleable.PinterestView_child_max_scale,MAX_SCALE);
+            mMaxScale = a.getFloat(R.styleable.PinterestView_child_max_scale, MAX_SCALE);
             createTipsPopWindow(context);
             a.recycle();
         }
@@ -186,7 +186,7 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
                         int width = contentView.getMeasuredWidth();
                         int offsetLeft = width == 0 ? -mChildSize / 4 : (-width / 2 + mChildSize / 2);
 
-                        if(!mIsAnimating) {
+                        if (!mIsAnimating) {
                             mPopTips.showAsDropDown(nearest, offsetLeft, -mChildSize * 2);
                         }
                         for (View view : mChildViews) {
