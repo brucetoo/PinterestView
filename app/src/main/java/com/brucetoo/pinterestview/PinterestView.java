@@ -211,7 +211,8 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
                     mPopTips.dismiss();
                     View nearest = nearest(event.getRawX(), event.getRawY(), mChildViews);
                     if (nearest != null && nearest.getTag() != null) {
-                        mPinMenuClickListener.onMenuItemClick(nearest);
+                        int clickItemPos = PinterestView.this.getTag() == null ? -1 : (int) PinterestView.this.getTag();
+                        mPinMenuClickListener.onMenuItemClick(nearest,clickItemPos);
                     }
                     switchState();
                 }
@@ -503,7 +504,7 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
          *
          * @param checkedView view has be checked
          */
-        void onMenuItemClick(View checkedView);
+        void onMenuItemClick(View checkedView,int clickItemPos);
 
         /**
          * Anchor view(the view click to show pinterestView) click

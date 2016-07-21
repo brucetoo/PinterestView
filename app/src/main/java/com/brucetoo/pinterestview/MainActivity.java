@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         pinterestView.setPinClickListener(new PinterestView.PinMenuClickListener() {
 
             @Override
-            public void onMenuItemClick(View view) {
+            public void onMenuItemClick(View view,int clickItemPos) {
                 Toast.makeText(MainActivity.this, view.getTag() + " clicked!", Toast.LENGTH_SHORT).show();
             }
 

@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -48,8 +49,8 @@ public class RecyclerFragment extends Fragment {
         pinterestView.setPinClickListener(new PinterestView.PinMenuClickListener() {
 
             @Override
-            public void onMenuItemClick(View view) {
-                Toast.makeText(getActivity(), view.getTag() + " clicked!", Toast.LENGTH_SHORT).show();
+            public void onMenuItemClick(View view,int clickItemPos) {
+                Toast.makeText(getActivity(), view.getTag() + " clicked!" + clickItemPos, Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -68,6 +69,7 @@ public class RecyclerFragment extends Fragment {
         recyclerView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                Log.e("setOnTouchListener","recyclerView onTouch");
                 return pinterestView.dispatchTouchEvent(event);
             }
         });
@@ -82,13 +84,20 @@ public class RecyclerFragment extends Fragment {
         }
 
         @Override
-        public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
             if (position % 2 == 0) {
                 ((ItemViewHolder) holder).imageView.setImageResource(R.drawable.p1);
             } else {
                 ((ItemViewHolder) holder).imageView.setImageResource(R.drawable.p2);
             }
-            ((ItemViewHolder) holder).imageView.setOnTouchListener(this);
+            ((ItemViewHolder) holder).imageView.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    Log.e("onBindViewHolder","onTouch");
+                    pinterestView.setTag(position);
+                    return pinterestView.dispatchTouchEvent(event);
+                }
+            });
         }
 
         @Override
