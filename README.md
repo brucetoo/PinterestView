@@ -4,9 +4,9 @@
 ## DEMO
 ![MINE](./mine1.gif)
 
-#NOTE
+# NOTE
  Any pull request is available.
-#HOW TO USE
+# HOW TO USE
 ```java
 
        /**
