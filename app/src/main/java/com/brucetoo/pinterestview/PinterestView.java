@@ -348,6 +348,7 @@ public class PinterestView extends ViewGroup implements View.OnTouchListener {
         child.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
+                child.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 Rect childRect = getChildDisPlayBounds(child);
                 if (mExpanded) {
                     expandAnimation(child, childRect);
